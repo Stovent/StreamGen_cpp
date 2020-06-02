@@ -19,7 +19,7 @@ struct TreeNode {
 	int mySupport;
 	int myTidSum;
 	int childrenSupport;
-	bool isClosed;
+	// bool isClosed;
 	bool isInfrequent;
 	bool isUnpromising;
 
@@ -30,7 +30,7 @@ struct TreeNode {
 		mySupport = 0;
 		myTidSum = 0;
 		childrenSupport = 0;
-		isClosed = false;
+		// isClosed = false;
 		isInfrequent = false;
 		isUnpromising = false;
 	}
@@ -42,7 +42,7 @@ struct TreeNode {
 		mySupport = rhs.mySupport;
 		myTidSum = rhs.myTidSum;
 		childrenSupport = rhs.childrenSupport;
-		isClosed = rhs.isClosed;
+		// isClosed = rhs.isClosed;
 		isInfrequent = rhs.isInfrequent;
 		isUnpromising = rhs.isUnpromising;
 	}
