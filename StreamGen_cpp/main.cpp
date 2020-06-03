@@ -21,6 +21,7 @@ uint32_t CET_NODE_ID = 0;
 uint32_t NBR_NODES = 0;
 uint32_t NBR_CLOSED_NODES = 0;
 uint32_t minsup = 0;
+CETNode ROOT = CETNode();
 std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
 int main(int argc, char *argv[]) {
@@ -31,7 +32,6 @@ int main(int argc, char *argv[]) {
     const uint32_t MAX_ATTRIBUTES = strtoul(argv[2], 0, 10);//100001
     minsup = strtoul(argv[3], 0, 10);//1
 
-    CETNode ROOT = CETNode();
     ROOT.children = new std::map<uint32_t, CETNode*>();
     ROOT.itemset = new std::vector<uint32_t>();
     ROOT.tidsum = 0;

@@ -25,7 +25,7 @@ public:
   };
 };
 
-bool contains(std::vector<uint32_t>* const _a, std::vector<uint32_t>* const _b, const bool _strict);
+bool contains(const std::vector<uint32_t>* const _a, const std::vector<uint32_t>* const _b, const bool _strict);
 
 std::vector<uint32_t>* inter(std::vector<uint32_t>* const left_set, std::vector<uint32_t>* const right_set);
 

@@ -1,11 +1,13 @@
 #include "StreamGen.h"
 #include "Utility.h"
 #include <iostream>
+#include <stack>
 
 extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_NODES;
 extern uint32_t NBR_CLOSED_NODES;
 extern uint32_t minsup;
+extern CETNode ROOT;
 extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
 void Explore(const uint32_t _tid, CETNode* const _node, std::vector<uint32_t>* const _transaction, const uint32_t _minsupp, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
@@ -34,7 +36,7 @@ void identify(CETNode* node) {
 	if (node->support < minsup) {
 		node->type = INFREQUENT__NODE;
 	}
-	else if (subset_has_same_support(node)) {
+	else if (subset_has_same_support(node->itemset, node->support)) {
 		node->type = UNPROMISSING__NODE;
 	}
 	else {
@@ -80,23 +82,27 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 }
 
 /**
- * node: node to check
- * refsup: support of the node to check
+ * node: the parent of the node to check
 **/
-bool subset_has_same_support(CETNode* node) {
-	if (node->parent) {
-		if (node->parent->parent) {
-			for (const std::pair<uint32_t, CETNode*>& child : *node->parent->parent->children) {
-				if (contains(child.second->itemset, node->itemset, true))
-					if (child.second->support == node->support)
-						return true;
+bool subset_has_same_support(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
+	std::stack<CETNode*> stack;
+	stack.push(&ROOT);
+
+	while (!stack.empty()) {
+		CETNode* node = stack.top();
+		stack.pop();
+		if (!node->children)
+			continue;
+		
+		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+			if (contains(child.second->itemset, itemset, true)) {
+				if (child.second->support == refsup)
+					return true;
+				stack.push(child.second);
 			}
 		}
-		else {
-			return node->support == node->parent->support;
-		}
 	}
-
+	
 	return false;
 }
 
