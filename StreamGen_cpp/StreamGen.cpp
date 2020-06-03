@@ -43,10 +43,16 @@ void identify(CETNode* node) {
 }
 
 void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist) {
+	if (!node->children) {
+		node->children = new std::map<uint32_t, CETNode*>();
+	}
 	node->children->emplace(maxitem, create_node(node, maxitem, tidlist));
 }
 
 bool has_child(CETNode* node, uint32_t maxitem) {
+	if (!node->children)
+		return false;
+	
 	return node->children->find(maxitem) != node->children->end();
 }
 
