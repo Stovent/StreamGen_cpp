@@ -63,7 +63,7 @@ void Transaction<T>::clean(void) {
 };
 
 template <class T>
-static inline void useless(T& t){}
+static inline void useless(const T& t){}
 
 template <class T>
 void Transaction<T>::load(char *_s, const char *_delims, const short _withcrc) {

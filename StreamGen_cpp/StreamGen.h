@@ -23,18 +23,15 @@ struct CETNode {
 	std::vector<uint32_t>* tidlist;
 };
 
-const uint8_t CLOSED_NODE = 0x04;
-const uint8_t INTERMEDIATE_NODE = 0x02;
-const uint8_t UNPROMISSING_GATEWAY_NODE = 0x01;
-const uint8_t INFREQUENT_GATEWAY_NODE = 0x03;
+const uint8_t INFREQUENT__NODE   = 0x01;
+const uint8_t UNPROMISSING__NODE = 0x02;
+const uint8_t GENERATOR_NODE     = 0x03;
 
 void Explore(const uint32_t _tid, CETNode* const _node,  std::vector<uint32_t>* const _transaction, const uint32_t _minsupp, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _TABLE);
 
 void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 
 void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
-
-std::vector<uint32_t>* left_check(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _TABLE);
 
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
