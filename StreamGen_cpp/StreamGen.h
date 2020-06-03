@@ -30,9 +30,10 @@ const uint8_t INFREQUENT__NODE   = 0x01;
 const uint8_t UNPROMISSING__NODE = 0x02;
 const uint8_t GENERATOR_NODE     = 0x03;
 
-void Explore(const uint32_t _tid, CETNode* const _node,  std::vector<uint32_t>* const _transaction, const uint32_t _minsupp, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _TABLE);
+void Explore(CETNode* const _node);
 
-void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
+// void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
+void Addition(const uint32_t tid, std::vector<uint32_t>* transaction);
 
 void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 

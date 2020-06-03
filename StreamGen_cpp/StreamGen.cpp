@@ -1,6 +1,7 @@
 #include "StreamGen.h"
 #include "Utility.h"
 #include <iostream>
+#include <queue>
 #include <stack>
 
 extern uint32_t CET_NODE_ID;
@@ -10,7 +11,7 @@ extern uint32_t minsup;
 extern CETNode ROOT;
 extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
-void Explore(const uint32_t _tid, CETNode* const _node, std::vector<uint32_t>* const _transaction, const uint32_t _minsupp, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
+void Explore(CETNode* const _node) {
 	std::map<uint32_t, CETNode*>* siblings = _node->parent->children;
 
 	for (const std::pair<uint32_t, CETNode*>& sibling : *siblings) {
@@ -24,8 +25,67 @@ void Explore(const uint32_t _tid, CETNode* const _node, std::vector<uint32_t>* c
 	}
 };
 
-void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
+//void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
+void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
+	std::queue<CETNode*> queue;
+	queue.push(&ROOT);
 
+	while (!queue.empty()) {
+		CETNode* node = queue.front();
+		queue.pop();
+
+		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
+		if (intersec->size() == node->itemset->size()) {
+			if (node->type == UNPROMISSING__NODE) {
+				identify(node);
+				if (node->type == UNPROMISSING__NODE)
+					continue;
+
+				Explore(node);
+			}
+
+			for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
+				if (child->second->type != INFREQUENT__NODE)
+					queue.push(child->second);
+			}
+		}
+		else if (intersec->size() > node->itemset->size()) {
+			node->support++;
+			node->tidlist->push_back(tid);
+			node->tidsum += tid;
+			if (node->type == UNPROMISSING__NODE)
+				continue;
+
+			if (node->type == INFREQUENT__NODE) {
+				if (node->support < minsup)
+					continue;
+
+				identify(node);
+				if (node->type == GENERATOR_NODE) {
+					Explore(node);
+				}
+			}
+			else {
+				for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
+					queue.push(child->second);
+				}
+
+				for (uint32_t item : *transaction) {
+					if (item <= node->maxitem)
+						continue;
+
+					// node
+					//     (itemset  - node->maxitem) union item
+					//             n
+					// create childs of node using his lexicographically right siblings
+					std::map<uint32_t, CETNode*>::iterator child = node->parent->children->find(item);
+					if (child != node->parent->children->end() && child->second->type == GENERATOR_NODE) {
+						new_child(node, item, node->tidlist); // TODO: check which tidlist to give to the new child
+					}
+				}
+			}
+		}
+	}
 };
 
 void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
@@ -105,7 +165,7 @@ bool subset_has_same_support(const std::vector<uint32_t>* itemset, const uint32_
 	
 	return false;
 }
-
+/*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
 	//std::cout << "Added new CI of size " << _node->itemset->size() << " ";
 	//print_cet_node(_node);
@@ -251,4 +311,4 @@ void print_cet_node(CETNode* const _node) {
 		std::cout << *it << ", ";
 	}
 	std::cout << std::endl;
-}
+}*/
