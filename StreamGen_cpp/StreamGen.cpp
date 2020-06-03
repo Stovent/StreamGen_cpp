@@ -5,10 +5,21 @@
 extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_NODES;
 extern uint32_t NBR_CLOSED_NODES;
+extern uint32_t minsup;
 extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
 void Explore(const uint32_t _tid, CETNode* const _node, std::vector<uint32_t>* const _transaction, const uint32_t _minsupp, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
+	std::map<uint32_t, CETNode*>* siblings = _node->parent->children;
 
+	for (const std::pair<uint32_t, CETNode*>& sibling : *siblings) {
+		if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem > _node->maxitem) {
+			new_child(_node, sibling.second->maxitem, inter(_node->tidlist, sibling.second->tidlist));
+		}
+		else if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem < _node->maxitem) {
+			if (!has_child(sibling.second, _node->maxitem))
+				new_child(sibling.second, _node->maxitem, inter(sibling.second->tidlist, _node->tidlist));
+		}
+	}
 };
 
 void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
@@ -19,8 +30,69 @@ void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const ui
 
 };
 
+void identify(CETNode* node) {
+	if (node->support < minsup) {
+		node->type = INFREQUENT__NODE;
+	}
+	else if (subset_has_same_support(node)) {
+		node->type = UNPROMISSING__NODE;
+	}
+	else {
+		node->type = GENERATOR_NODE;
+	}
+}
+
+void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist) {
+	node->children->emplace(maxitem, create_node(node, maxitem, tidlist));
+}
+
+bool has_child(CETNode* node, uint32_t maxitem) {
+	return node->children->find(maxitem) != node->children->end();
+}
+
 
 //Below are utility functions for Moment (non in algorithm). TODO: Still need to add exit and error codes
+
+CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist) {
+	CETNode* node = new CETNode;
+	node->id = ++CET_NODE_ID;
+	node->maxitem = maxitem;
+	node->parent = parent;
+	node->tidlist = tidlist;
+	node->support = node->tidlist->size();
+	node->children = nullptr;
+
+	node->tidsum = 0;
+	for (const uint32_t tid : *node->tidlist) {
+		node->tidsum += tid;
+	}
+
+	node->itemset = new std::vector<uint32_t>(parent->itemset->begin(), parent->itemset->end());
+	node->itemset->push_back(maxitem);
+	identify(node);
+	return node;
+}
+
+/**
+ * node: node to check
+ * refsup: support of the node to check
+**/
+bool subset_has_same_support(CETNode* node) {
+	if (node->parent) {
+		if (node->parent->parent) {
+			for (const std::pair<uint32_t, CETNode*>& child : *node->parent->parent->children) {
+				if (contains(child.second->itemset, node->itemset, true))
+					if (child.second->support == node->support)
+						return true;
+			}
+		}
+		else {
+			return node->support == node->parent->support;
+		}
+	}
+
+	return false;
+}
 
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
 	//std::cout << "Added new CI of size " << _node->itemset->size() << " ";

@@ -10,12 +10,15 @@
 struct CETNode {
 	uint8_t type;
 	uint32_t support;
-	uint32_t item;
+	// uint32_t item;
+	uint32_t maxitem; // theorically, item and maxitem should refer to the same item.
+					  // is using children[children->size() - 1] a better solution?
 	uint32_t tidsum = 0;
 	uint32_t id;
 
-	long hash;
-	long oldHash;
+	// there is no hash in StreamGen
+	// long hash;
+	// long oldHash;
 
 	std::vector<uint32_t>* itemset;
 	std::map<uint32_t, CETNode*>* children;
@@ -32,6 +35,14 @@ void Explore(const uint32_t _tid, CETNode* const _node,  std::vector<uint32_t>* 
 void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 
 void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
+
+void identify(CETNode* node);
+void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist);
+bool has_child(CETNode* node, uint32_t maxitem);
+
+// utility
+CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist);
+bool subset_has_same_support(CETNode* node);
 
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);

@@ -1,6 +1,9 @@
 #include "Utility.h"
 #include <iostream>
 
+/**
+ * check if _a is contained in _b
+**/
 bool contains(std::vector<uint32_t>* const _a, std::vector<uint32_t>* const _b, const bool _strict) {
   if ((!_strict && _a->size() == _b->size()) || _a->size() > _b->size()) {
     int lastMatch = 0;
