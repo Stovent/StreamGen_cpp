@@ -35,7 +35,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		queue.pop();
 
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
-		if (intersec->size() == node->itemset->size()) {
+		if (intersec->size() == node->itemset->size() - 1) {
 			if (node->type == UNPROMISSING__NODE) {
 				identify(node);
 				if (node->type == UNPROMISSING__NODE)
@@ -49,7 +49,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 					queue.push(child->second);
 			}
 		}
-		else if (intersec->size() > node->itemset->size()) {
+		else if (intersec->size() > node->itemset->size() - 1) {
 			node->support++;
 			node->tidlist->push_back(tid);
 			node->tidsum += tid;
@@ -85,6 +85,8 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				}
 			}
 		}
+
+		delete intersec;
 	}
 };
 
