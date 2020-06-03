@@ -1,249 +1,127 @@
-//variables defined for book-keeping
-//FP::numberOfFPNodes
-//CET::numberOfCETNodes
+#include "Transaction.h"
+#include "StreamGen.h"
 
-#include "misc.h"
-#include "FP.h"
-#include "CET.h"
+#include <cstdio>   //fopen, printf
+#include <cstdlib>  //atol
+#include <queue>    //sliding window
+#include <cstring>  //strtok
+#include <ctime>    //clock_t
+#include <iostream> //cout
+#include <map>
+#include <vector>
+#include <set>
 
-#ifdef _WIN32
-	#include <windows.h>
-	#include <psapi.h>
-#endif
-
-unsigned int WINDOW_SIZE;
-unsigned int SUPPORT;
-unsigned short MAX_ITEM;
-unsigned int TRANSACTION_SIZE;
-
-const unsigned short ENDSHORT = 65535;
-const int ENDINT = 2000000001;
-
-long FPNode::numberOfFPNodes = 0;
-long TreeNode::numberOfCETNodes = 0;
-
-long numberOfExploreCall = 0; //number of newly frequent and newly promising, for an addition
-
-int main(int argc, char* argv[])
-{
-	if (argc != 6) {
-		cout << "Usage: " << argv[0] << " window_size support item_size input_file output_file" << endl;
-		exit(1);
-	}
-
-	istringstream iss1(argv[1]);
-	iss1 >> WINDOW_SIZE;
-	if (!iss1) {
-		cerr << "Invalid window_size, not an integer value!" << endl;
-		exit(1);
-	}
-
-	istringstream iss2(argv[2]);
-	iss2 >> SUPPORT;
-	if (!iss2 && SUPPORT < 1 && SUPPORT > WINDOW_SIZE) {
-		cerr << "Invalid support, value must be greater than 0 and should be smaller or equal than window_size!" << endl;
-		exit(1);
-	}
-
-	istringstream iss3(argv[3]);
-	iss3 >> MAX_ITEM;
-	if (!iss3 && MAX_ITEM <= 0) {
-		cerr << "Invalid number of items, not a positive integer value!" << endl;
-		exit(1);
-	}
-
-	string inputFile = argv[4];
-	string outputFile = argv[5];
-
-	ofstream outFile(outputFile.c_str());
-	if (!outFile) {
-		cerr << "cannot open OUTPUT file!" << endl;
-		exit(1);
-	}
-
-	ifstream inFile(inputFile.c_str());
-	if (!inFile) {
-		cerr << "cannot open INPUT file!" << endl;
-		outFile.close();
-		exit(1);
-	}
-
-	clock_t t1 = clock();
-
-	FP mainFPTree(MAX_ITEM);
-
-	unsigned int tid = 0;
-	while (tid < WINDOW_SIZE && !inFile.eof()) {
-		++tid;
-		vector<unsigned short> items;
-		string line;
-		string token;
-		std::getline(inFile, line);
-		istringstream iss(line);
-		while (getline(iss, token, ' ')) {
-			items.push_back(stoi(token));
-		}
-		mainFPTree.addItemset(items, tid);
-	}
-
-	/*for ( int i = WINDOW_SIZE; i > 0; i-- ) {
-		inFile >> dummyInt;
-		if ( !inFile ) {
-			cerr << "not enough transactions for one window!" << endl;
-			inFile.close();
-			outFile.close();
-			exit(1);
-		}
-		inFile >> dummyInt;
-		int length;
-		inFile >> length;
-		vector<unsigned short> items;
-		for ( int j = 0; j < length; j++ ) {
-			inFile >> dummyShort;
-			items.push_back(dummyShort);
-		}
-		mainFPTree.addItemset(items, dummyInt);
-	}*/
-
-	outFile << "FP_tree_size: " << FPNode::numberOfFPNodes << " in " << static_cast<float>(clock() - t1) / CLOCKS_PER_SEC << endl;
-
-	t1 = clock();
-
-	CET mainCET;
-	mainCET.initialize(mainFPTree);
-
-	float initialFPTree_time = static_cast<float>(clock() - t1) / CLOCKS_PER_SEC;
-	outFile << "Main window of size:" << tid << " in " << initialFPTree_time << "s, closed itemset:" << mainCET.closedItemsets.size() << ", # CET nodes:" << TreeNode::numberOfCETNodes << endl;
-
-	////debug
-	//cout << "***********************************" << endl;
-	//mainCET.printMe(mainCET.CETRoot,0);
-	//cout << endl;
-	//mainCET.printHash();
-	//cout << endl;
-	float avgTime = 0;
-	float totalTime = 0;
-	long totalExplore = 0;
-	long totalAddedNodes = 0;
-	long totalDeletedNodes = 0;
-	size_t totalClosed = 0;
-	long totalCETNodes = 0;
-
-	long previousNodes;
-
-	outFile << "  #   sec     CI- CET_nodes  # call  +nodes  -nodes    CI+" << endl;
-
-	int i = 0;
-	while (!inFile.eof()) {
-		++i;
-		numberOfExploreCall = 0;
-		long addedNodes = 0;
-		long deletedNodes = 0;
-		previousNodes = TreeNode::numberOfCETNodes;
-
-		//fix start
-		vector<unsigned short> items;
-		string line;
-		string token;
-		std::getline(inFile, line);
-		istringstream iss(line);
-		while (getline(iss, token, ' ')) {
-			items.push_back(stoi(token));
-		}
-		//fix end
-
-			//inFile >> dummyInt;
-			//if ( inFile.eof() ) break;
-			//inFile >> dummyInt;
-			//int length;
-			//inFile >> length;
-			//vector<unsigned short> myItems;
-			//for ( int j = 0; j < length; j++ ) {
-			//	inFile >> dummyShort;
-			//	myItems.push_back(dummyShort);
-			//}
-
-		t1 = clock();
-
-		++tid;
-		int t = tid; // tid temp needed in deleteItemset
-		mainFPTree.addItemset(items, t);
-		mainCET.addition(t, items, mainFPTree);
-
-		////debug
-		//cout << "***********************************" << endl;
-		//mainCET.printMe(mainCET.CETRoot,0);
-		//cout << endl;
-		//mainCET.printHash();
-		//cout << endl;
-
-		addedNodes = TreeNode::numberOfCETNodes - previousNodes;
-		previousNodes = TreeNode::numberOfCETNodes;
-		size_t temp = mainCET.closedItemsets.size();
-
-		items.clear();
-		mainFPTree.deleteItemset(items, t);
-		mainCET.deletion(t, items, mainFPTree);
-
-		////debug
-		//cout << "***********************************" << endl;
-		//mainCET.printMe(mainCET.CETRoot,0);
-		//cout << endl;
-		//cout << i << ":" << endl;
-		//mainCET.printHash();
-		//cout << endl;
-
-		deletedNodes = previousNodes - TreeNode::numberOfCETNodes;
-
-		float tempTime = static_cast<float>(clock() - t1) / CLOCKS_PER_SEC;
-		totalTime += tempTime;
-		avgTime = (avgTime + tempTime) / 2;
-		outFile.width(3);
-		outFile << i;
-		outFile.width(6); outFile.precision(4);
-		outFile << tempTime;
-		outFile.width(8);
-		outFile << mainCET.closedItemsets.size();
-		outFile.width(10);
-		outFile << TreeNode::numberOfCETNodes;
-		outFile.width(8);
-		outFile << numberOfExploreCall;
-		outFile.width(8);
-		outFile << addedNodes;
-		outFile.width(8);
-		outFile << deletedNodes;
-		outFile.width(7);
-		outFile << temp << endl;
-
-		totalExplore += numberOfExploreCall;
-		totalAddedNodes += addedNodes;
-		totalDeletedNodes += deletedNodes;
-		totalClosed = mainCET.closedItemsets.size();
-		totalCETNodes = TreeNode::numberOfCETNodes;
-
-		//if ( i+1 == 15 ) {
-		//	cout << "checking closed itemsets..." << endl;
-		//	mainCET.checkMe();
-		//}
-	}
-	outFile << endl;
-	outFile << "total time      : " << totalTime << "s" << endl;
-	outFile << "initial FPTree time : " << initialFPTree_time << "s" << endl;
-	outFile << "average time of all sliding windows : " << avgTime << "s" << endl;
-	outFile << "closed itemset #: " << totalClosed << endl;
-	outFile << "CET node       #: " << totalCETNodes << endl;
-	outFile << "Explore call   #: " << totalExplore << endl;
-	outFile << "Added node     #: " << totalAddedNodes << endl;
-	outFile << "Deleted node   #: " << totalDeletedNodes << endl;
 
 #ifdef _WIN32
-	PROCESS_MEMORY_COUNTERS_EX info;
-	GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&info, sizeof(info));
-	outFile << "WorkingSet " << info.WorkingSetSize / 1024 << "K, PeakWorkingSet " << info.PeakWorkingSetSize / 1024 << "K, PrivateSet " << info.PrivateUsage / 1024 << "K" << endl;
+//#include <windows.h>
+//#include <psapi.h>
 #endif
 
-	inFile.close();
-	outFile.close();
+uint32_t CET_NODE_ID = 0;
+uint32_t NBR_NODES = 0;
+uint32_t NBR_CLOSED_NODES = 0;
+std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
-	return 0;
+int main(int argc, char *argv[]) {
+    if (argc != 4) return 0;
+    clock_t start = clock(); clock_t running = clock();
+    std::queue<Transaction<uint32_t>> window;
+    const uint32_t window_size = strtoul(argv[1], 0, 10);//1500
+    const uint32_t MAX_ATTRIBUTES = strtoul(argv[2], 0, 10);//100001
+    const uint32_t minsup = strtoul(argv[3], 0, 10);//1
+
+    CETNode ROOT = CETNode();
+    ROOT.children = new std::map<uint32_t, CETNode*>();
+    ROOT.itemset = new std::vector<uint32_t>();
+    ROOT.tidsum = 0;
+    std::map<long, std::vector<std::vector<CETNode*>*>*> EQ_TABLE = std::map<long, std::vector<std::vector<CETNode*>*>*>();
+    //uint32_t minsup = 0;
+
+    //const uint32_t MAX_ATTRIBUTES = 1001;
+    //initialiser l'arbre (autant de noeuds de d'items)
+    //ou on peut le faire a chaque trx ? si nouvel item, on rajoute l'item dans l'arbre ?
+    for (int i = 0; i != MAX_ATTRIBUTES; ++i) {
+        CETNode* atom = new CETNode();
+        ROOT.children->emplace(i, atom);
+        atom->parent = &ROOT;
+        atom->item = i;
+        atom->itemset = new std::vector<uint32_t>();
+        atom->itemset->push_back(i);
+        atom->type = INFREQUENT_GATEWAY_NODE;//? a verifier, mais ca se tient
+        atom->tidlist = new std::vector<uint32_t>();// [0];
+        atom->tidsum = 0;
+        atom->id = ++CET_NODE_ID;
+        atom->hash = 0;
+        atom->oldHash = 0;
+        atom->support = 0;
+        NBR_NODES += 1;
+    }
+
+    char s[10000];
+    uint32_t i = 0;
+    while (fgets(s, 10000, stdin) != NULL) {
+        char *pch = strtok(s, " ");
+        //if (i > 9998) break;
+        if (0 != window_size && i >= window_size) {
+            //delete
+            Transaction<uint32_t> old_transaction = window.front();
+            Deletion(1 + (i - window_size), old_transaction.data(), minsup, &ROOT, &EQ_TABLE);
+            //std::cout << "removed something " << std::endl;
+            window.pop();
+        }
+        Transaction<uint32_t> new_transaction = Transaction<uint32_t>(pch, " ", 0);
+        //new_transaction.load(pch, " ", 0);
+        //add
+        //std::cout << "added something " << std::endl;
+        if (i % 500 == 0){
+            std::cout << i << " transaction(s) processed" << std::endl;
+        }
+        Addition(i + 1, new_transaction.data(), minsup, &ROOT, &EQ_TABLE);
+        window.push(new_transaction);
+        i += 1;
+
+#ifdef DEBUG
+      if ((row % 1000 == 0 && row < 10001) || row % 10000 == 0) {
+        printf("elapsed time between checkpoint %0.2f ms, ", (clock() - running) / (double)CLOCKS_PER_SEC * 1000);
+          running = clock();
+          cout << row << " rows processed, idx size/capacity:" << idx.size() << "/" << idx.capacity() << ", # concept:" << fCI2.size() << endl;
+      }
+#endif
+    }
+    std::cout << CLOSED_ITEMSETS.size() << std::endl;
+    printf("Stream completed in %0.2f sec, ", (clock() - start) / (double)CLOCKS_PER_SEC);
+
+    //nettoyage de l'arbre (TODO: put this in a function)
+    //NOTA: peut etre prune_children pourrait faire l'affaire ici !!
+    {
+        prune_children(&ROOT, 0, &EQ_TABLE);
+        delete ROOT.children;
+        delete ROOT.itemset;
+        delete ROOT.tidlist;
+        //nettoyer, children, itemset
+        //y aller directement DFS
+    }
+
+    //nettoyage de la map (TODO: put this in a function)
+    {
+        std::map<long, std::vector<std::vector<CETNode*>*>*>::iterator it = EQ_TABLE.begin();
+        for (; it != EQ_TABLE.end(); ++it) {
+            std::vector<std::vector<CETNode*>*>* eq_class_stratified = it->second;
+            std::vector<std::vector<CETNode*>*>::iterator eq_class_stratified_it = eq_class_stratified->begin();
+            for (; eq_class_stratified_it != eq_class_stratified->end(); ++eq_class_stratified_it) {
+            std::vector<CETNode*>* eq_class = *eq_class_stratified_it;
+            delete eq_class;//Not necessary to clean referenced node pointers, they are cleaned below with the tree
+            }
+            delete eq_class_stratified;
+        }
+    }
+
+
+
+#ifdef _WIN32
+    //PROCESS_MEMORY_COUNTERS_EX info;
+    //GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS *)&info, sizeof(info));
+    //std::cout << "WorkingSet " << info.WorkingSetSize / 1024 << "K, PeakWorkingSet " << info.PeakWorkingSetSize / 1024 << "K, PrivateSet " << info.PrivateUsage / 1024 << "K" << endl;
+#endif
+    return EXIT_SUCCESS;
 }
