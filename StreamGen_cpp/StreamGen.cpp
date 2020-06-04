@@ -147,9 +147,6 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	return node;
 }
 
-/**
- * node: the parent of the node to check
-**/
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
 	std::stack<CETNode*> stack;
 	stack.push(&ROOT);

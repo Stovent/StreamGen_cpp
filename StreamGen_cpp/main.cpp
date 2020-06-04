@@ -8,6 +8,7 @@
 #include <ctime>    //clock_t
 #include <iostream> //cout
 #include <fstream>
+#include <iomanip>
 #include <queue>
 #include <map>
 #include <vector>
@@ -117,8 +118,8 @@ int main(int argc, char *argv[]) {
 
     printf("Stream completed in %0.2f sec, ", (clock() - start) / (double)CLOCKS_PER_SEC);
     std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
-    output << "node_id support itemset" << std::endl;
-
+    output << " node_id supp itemset" << std::endl;
+    // export generators for debug
     std::queue<CETNode*> queue;
     queue.push(&ROOT);
     while (!queue.empty()) {
@@ -126,7 +127,7 @@ int main(int argc, char *argv[]) {
         queue.pop();
 
         if (node->type == GENERATOR_NODE) {
-            output << node->id << " " << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+            output << std::setw(8) << node->id << " " << std::setw(5) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
         }
 
         if (node->children) {
