@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    std::cout << "  minsup: " << minsup << "; window_size: " << window_size << std::endl;
+
     ROOT.children = new std::map<uint32_t, CETNode*>();
     ROOT.itemset = new std::vector<uint32_t>();
     ROOT.tidsum = 0;
@@ -84,8 +86,8 @@ int main(int argc, char *argv[]) {
         //add
         //std::cout << "added something " << std::endl;
         if (i % 500 == 0){
-            std::cout << i << " transaction(s) processed" << std::endl;
         }
+            std::cout << i << " transaction(s) processed" << std::endl;
         Addition(i + 1, new_transaction.data());
         window.push(new_transaction);
         i += 1;

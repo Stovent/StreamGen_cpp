@@ -35,7 +35,12 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		queue.pop();
 
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
-		if (intersec->size() == node->itemset->size() - 1) {
+		if (node->itemset->size() == 0) { // special treatment for the root node
+			for (const std::pair<uint32_t, CETNode*>& item : *node->children) {
+				queue.push(item.second);
+			}
+		}
+		else if (intersec->size() == node->itemset->size() - 1) {
 			if (node->type == UNPROMISSING_NODE) {
 				identify(node);
 				if (node->type == UNPROMISSING_NODE)
@@ -43,10 +48,11 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 
 				Explore(node);
 			}
-
-			for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
-				if (child->second->type != INFREQUENT_NODE)
-					queue.push(child->second);
+			if (node->children) {
+				for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
+					if (child->second->type != INFREQUENT_NODE)
+						queue.push(child->second);
+				}
 			}
 		}
 		else if (intersec->size() > node->itemset->size() - 1) {
@@ -66,8 +72,10 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				}
 			}
 			else {
-				for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
-					queue.push(child->second);
+				if (node->children) {
+					for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
+						queue.push(child->second);
+					}
 				}
 
 				for (uint32_t item : *transaction) {
