@@ -6,7 +6,7 @@
 
 extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_NODES;
-extern uint32_t NBR_CLOSED_NODES;
+extern uint32_t NBR_GENERATOR_NODES;
 extern uint32_t minsup;
 extern CETNode ROOT;
 extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
@@ -65,6 +65,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				identify(node);
 				if (node->type == GENERATOR_NODE) {
 					Explore(node);
+					NBR_GENERATOR_NODES++;
 				}
 			}
 			else {

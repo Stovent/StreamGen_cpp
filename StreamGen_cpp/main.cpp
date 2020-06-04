@@ -8,6 +8,7 @@
 #include <ctime>    //clock_t
 #include <iostream> //cout
 #include <fstream>
+#include <queue>
 #include <map>
 #include <vector>
 #include <set>
@@ -20,14 +21,22 @@
 
 uint32_t CET_NODE_ID = 0;
 uint32_t NBR_NODES = 0;
-uint32_t NBR_CLOSED_NODES = 0;
+uint32_t NBR_GENERATOR_NODES = 0;
 uint32_t minsup = 0;
 CETNode ROOT = CETNode();
 std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
+static std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
+    std::string str;
+    for (const uint32_t item : *itemset) {
+        str += std::to_string(item) + " ";
+    }
+    return str;
+}
+
 int main(int argc, char *argv[]) {
-    if (argc != 5) {
-        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile" << std::endl;
+    if (argc != 6) {
+        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile outputfile" << std::endl;
         return 0;
     }
     clock_t start = clock(); clock_t running = clock();
@@ -38,6 +47,11 @@ int main(int argc, char *argv[]) {
     std::ifstream input(argv[4]);
     if (!input.is_open()) {
         std::cout << "Cannot open input file " << argv[4] << std::endl;
+        return 1;
+    }
+    std::ofstream output(argv[5]);
+    if (!output.is_open()) {
+        std::cout << "Cannot open output file " << argv[5] << std::endl;
         return 1;
     }
 
@@ -100,8 +114,27 @@ int main(int argc, char *argv[]) {
       }
 #endif
     }
-    std::cout << CLOSED_ITEMSETS.size() << std::endl;
+
     printf("Stream completed in %0.2f sec, ", (clock() - start) / (double)CLOCKS_PER_SEC);
+    std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
+    output << "node_id support itemset" << std::endl;
+
+    std::queue<CETNode*> queue;
+    queue.push(&ROOT);
+    while (!queue.empty()) {
+        CETNode* node = queue.front();
+        queue.pop();
+
+        if (node->type == GENERATOR_NODE) {
+            output << node->id << " " << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+        }
+
+        if (node->children) {
+            for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+                queue.push(child.second);
+            }
+        }
+    }
 
     //nettoyage de l'arbre (TODO: put this in a function)
     //NOTA: peut etre prune_children pourrait faire l'affaire ici !!
