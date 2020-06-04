@@ -35,12 +35,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		queue.pop();
 
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
-		if (node->itemset->size() == 0) { // special treatment for the root node
-			for (const std::pair<uint32_t, CETNode*>& item : *node->children) {
-				queue.push(item.second);
-			}
-		}
-		else if (intersec->size() == node->itemset->size() - 1) {
+		if (intersec->size() == node->itemset->size() - 1) {
 			if (node->type == UNPROMISSING_NODE) {
 				identify(node);
 				if (node->type == UNPROMISSING_NODE)
@@ -55,9 +50,10 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				}
 			}
 		}
-		else if (intersec->size() > node->itemset->size() - 1) {
+		else if (intersec->size() == node->itemset->size()) {
 			node->support++;
-			node->tidlist->push_back(tid);
+			if(node->tidlist)
+				node->tidlist->push_back(tid);
 			node->tidsum += tid;
 			if (node->type == UNPROMISSING_NODE)
 				continue;
@@ -83,9 +79,11 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 						continue;
 
 					// create childs of node using his lexicographically right siblings
-					std::map<uint32_t, CETNode*>::iterator child = node->parent->children->find(item);
-					if (child != node->parent->children->end() && child->second->type == GENERATOR_NODE) {
-						new_child(node, item, node->tidlist); // TODO: check which tidlist to give to the new child
+					if (node->parent) {
+						std::map<uint32_t, CETNode*>::iterator child = node->parent->children->find(item);
+						if (child != node->parent->children->end() && child->second->type == GENERATOR_NODE) {
+							new_child(node, item, inter(node->tidlist, child->second->tidlist));
+						}
 					}
 				}
 			}
