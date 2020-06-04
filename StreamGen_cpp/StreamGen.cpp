@@ -36,16 +36,16 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
 		if (intersec->size() == node->itemset->size() - 1) {
-			if (node->type == UNPROMISSING__NODE) {
+			if (node->type == UNPROMISSING_NODE) {
 				identify(node);
-				if (node->type == UNPROMISSING__NODE)
+				if (node->type == UNPROMISSING_NODE)
 					continue;
 
 				Explore(node);
 			}
 
 			for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->rbegin(); child != node->children->rend(); child++) {
-				if (child->second->type != INFREQUENT__NODE)
+				if (child->second->type != INFREQUENT_NODE)
 					queue.push(child->second);
 			}
 		}
@@ -53,10 +53,10 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 			node->support++;
 			node->tidlist->push_back(tid);
 			node->tidsum += tid;
-			if (node->type == UNPROMISSING__NODE)
+			if (node->type == UNPROMISSING_NODE)
 				continue;
 
-			if (node->type == INFREQUENT__NODE) {
+			if (node->type == INFREQUENT_NODE) {
 				if (node->support < minsup)
 					continue;
 
@@ -74,9 +74,6 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 					if (item <= node->maxitem)
 						continue;
 
-					// node
-					//     (itemset  - node->maxitem) union item
-					//             n
 					// create childs of node using his lexicographically right siblings
 					std::map<uint32_t, CETNode*>::iterator child = node->parent->children->find(item);
 					if (child != node->parent->children->end() && child->second->type == GENERATOR_NODE) {
@@ -96,10 +93,10 @@ void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const ui
 
 void identify(CETNode* node) {
 	if (node->support < minsup) {
-		node->type = INFREQUENT__NODE;
+		node->type = INFREQUENT_NODE;
 	}
 	else if (subset_has_same_support(node->itemset, node->support)) {
-		node->type = UNPROMISSING__NODE;
+		node->type = UNPROMISSING_NODE;
 	}
 	else {
 		node->type = GENERATOR_NODE;

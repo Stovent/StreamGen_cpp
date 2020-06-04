@@ -7,6 +7,7 @@
 #include <cstring>  //strtok
 #include <ctime>    //clock_t
 #include <iostream> //cout
+#include <fstream>
 #include <map>
 #include <vector>
 #include <set>
@@ -25,12 +26,20 @@ CETNode ROOT = CETNode();
 std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) return 0;
+    if (argc != 5) {
+        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile" << std::endl;
+        return 0;
+    }
     clock_t start = clock(); clock_t running = clock();
     std::queue<Transaction<uint32_t>> window;
     const uint32_t window_size = strtoul(argv[1], 0, 10);//1500
     const uint32_t MAX_ATTRIBUTES = strtoul(argv[2], 0, 10);//100001
     minsup = strtoul(argv[3], 0, 10);//1
+    std::ifstream input(argv[4]);
+    if (!input.is_open()) {
+        std::cout << "Cannot open input file " << argv[4] << std::endl;
+        return 1;
+    }
 
     ROOT.children = new std::map<uint32_t, CETNode*>();
     ROOT.itemset = new std::vector<uint32_t>();
@@ -45,25 +54,25 @@ int main(int argc, char *argv[]) {
         CETNode* atom = new CETNode();
         ROOT.children->emplace(i, atom);
         atom->parent = &ROOT;
-        atom->item = i;
+        atom->maxitem = i;
         atom->itemset = new std::vector<uint32_t>();
         atom->itemset->push_back(i);
-        atom->type = INFREQUENT_GATEWAY_NODE;//? a verifier, mais ca se tient
+        atom->type = INFREQUENT_NODE;//? a verifier, mais ca se tient
         atom->tidlist = new std::vector<uint32_t>();// [0];
         atom->tidsum = 0;
         atom->id = ++CET_NODE_ID;
-        atom->hash = 0;
-        atom->oldHash = 0;
+        // atom->hash = 0;
+        // atom->oldHash = 0;
         atom->support = 0;
         NBR_NODES += 1;
     }
 
     char s[10000];
     uint32_t i = 0;
-    while (fgets(s, 10000, stdin) != NULL) {
+    while (input.getline(s, 10000)) {
         char *pch = strtok(s, " ");
         //if (i > 9998) break;
-        if (0 != window_size && i >= window_size) {
+        if (window_size != 0 && i >= window_size) {
             //delete
             Transaction<uint32_t> old_transaction = window.front();
             Deletion(1 + (i - window_size), old_transaction.data(), minsup, &ROOT, &EQ_TABLE);
@@ -77,7 +86,7 @@ int main(int argc, char *argv[]) {
         if (i % 500 == 0){
             std::cout << i << " transaction(s) processed" << std::endl;
         }
-        Addition(i + 1, new_transaction.data(), minsup, &ROOT, &EQ_TABLE);
+        Addition(i + 1, new_transaction.data());
         window.push(new_transaction);
         i += 1;
 
@@ -95,7 +104,7 @@ int main(int argc, char *argv[]) {
     //nettoyage de l'arbre (TODO: put this in a function)
     //NOTA: peut etre prune_children pourrait faire l'affaire ici !!
     {
-        prune_children(&ROOT, 0, &EQ_TABLE);
+        //prune_children(&ROOT, 0, &EQ_TABLE);
         delete ROOT.children;
         delete ROOT.itemset;
         delete ROOT.tidlist;

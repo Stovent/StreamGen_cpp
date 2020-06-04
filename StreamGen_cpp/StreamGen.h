@@ -26,8 +26,8 @@ struct CETNode {
 	std::vector<uint32_t>* tidlist;
 };
 
-const uint8_t INFREQUENT__NODE   = 0x01;
-const uint8_t UNPROMISSING__NODE = 0x02;
+const uint8_t INFREQUENT_NODE   = 0x01;
+const uint8_t UNPROMISSING_NODE = 0x02;
 const uint8_t GENERATOR_NODE     = 0x03;
 
 void Explore(CETNode* const _node);
