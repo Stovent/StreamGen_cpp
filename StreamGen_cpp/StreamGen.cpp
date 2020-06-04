@@ -103,11 +103,11 @@ void identify(CETNode* node) {
 	if (node->support < minsup) {
 		node->type = INFREQUENT_NODE;
 	}
-	else if (subset_has_same_support(node->itemset, node->support)) {
-		node->type = UNPROMISSING_NODE;
+	else if (itemset_is_a_generator(node->itemset, node->support)) {
+		node->type = GENERATOR_NODE;
 	}
 	else {
-		node->type = GENERATOR_NODE;
+		node->type = UNPROMISSING_NODE;
 	}
 }
 
@@ -151,7 +151,7 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 /**
  * node: the parent of the node to check
 **/
-bool subset_has_same_support(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
+bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
 	std::stack<CETNode*> stack;
 	stack.push(&ROOT);
 
@@ -163,15 +163,18 @@ bool subset_has_same_support(const std::vector<uint32_t>* itemset, const uint32_
 		
 		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
 			if (contains(child.second->itemset, itemset, true)) {
+				if (child.second->type != GENERATOR_NODE)
+					return false;
 				if (child.second->support == refsup)
-					return true;
+					return false;
 				stack.push(child.second);
 			}
 		}
 	}
 	
-	return false;
+	return true;
 }
+
 /*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
 	//std::cout << "Added new CI of size " << _node->itemset->size() << " ";

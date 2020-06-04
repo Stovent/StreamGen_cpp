@@ -43,7 +43,7 @@ bool has_child(CETNode* node, uint32_t maxitem);
 
 // utility
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist);
-bool subset_has_same_support(const std::vector<uint32_t>* itemset, const uint32_t refsup);
+bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
 
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
