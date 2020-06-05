@@ -107,6 +107,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				identify(node);
 				if (node->type == UNPROMISSING_NODE) {
 					clean(node);
+					NBR_GENERATOR_NODES--;
 				}
 				else {
 					if (node->children) {
@@ -128,6 +129,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				if (node->support < minsup) {
 					if (node->type == GENERATOR_NODE) {
 						clean(node);
+						NBR_GENERATOR_NODES--;
 					}
 					node->type = INFREQUENT_NODE;
 				}
