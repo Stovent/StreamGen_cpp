@@ -11,16 +11,16 @@ extern uint32_t minsup;
 extern CETNode ROOT;
 extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
 
-void Explore(CETNode* const _node) {
-	std::map<uint32_t, CETNode*>* siblings = _node->parent->children;
+void Explore(CETNode* const node) {
+	std::map<uint32_t, CETNode*>* siblings = node->parent->children;
 
 	for (const std::pair<uint32_t, CETNode*>& sibling : *siblings) {
-		if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem > _node->maxitem) {
-			new_child(_node, sibling.second->maxitem, inter(_node->tidlist, sibling.second->tidlist));
+		if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem > node->maxitem) {
+			new_child(node, sibling.second->maxitem, inter(node->tidlist, sibling.second->tidlist));
 		}
-		else if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem < _node->maxitem) {
-			if (!has_child(sibling.second, _node->maxitem))
-				new_child(sibling.second, _node->maxitem, inter(sibling.second->tidlist, _node->tidlist));
+		else if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem < node->maxitem) {
+			if (!has_child(sibling.second, node->maxitem))
+				new_child(sibling.second, node->maxitem, inter(sibling.second->tidlist, node->tidlist));
 		}
 	}
 };
@@ -65,7 +65,6 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				identify(node);
 				if (node->type == GENERATOR_NODE) {
 					Explore(node);
-					NBR_GENERATOR_NODES++;
 				}
 			}
 			else {
@@ -94,8 +93,58 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 	}
 };
 
-void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
+void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
+	std::queue<CETNode*> queue;
+	queue.push(&ROOT);
 
+	while (!queue.empty()) {
+		CETNode* node = queue.front();
+		queue.pop();
+
+		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
+		if (intersec->size() == node->itemset->size() - 1) {
+			if (node->type == GENERATOR_NODE) {
+				identify(node);
+				if (node->type == UNPROMISSING_NODE) {
+					clean(node);
+				}
+				else {
+					if (node->children) {
+						for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->crbegin(); child != node->children->crend(); child++) {
+							if (child->second->type == GENERATOR_NODE) {
+								queue.push(child->second);
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (intersec->size() == node->itemset->size()) {
+			node->support--;
+			if (node->type == INFREQUENT_NODE && node->support == 0) {
+				remove_child(node->parent, node->maxitem);
+			}
+			else {
+				if (node->support < minsup) {
+					if (node->type == GENERATOR_NODE) {
+						clean(node);
+					}
+					node->type = INFREQUENT_NODE;
+				}
+				else {
+					if (node->type == GENERATOR_NODE && node->children) {
+						for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->crbegin(); child != node->children->crend(); child++) {
+							if (child->second->type == GENERATOR_NODE) {
+								queue.push(child->second);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		delete intersec;
+	}
 };
 
 void identify(CETNode* node) {
@@ -103,6 +152,8 @@ void identify(CETNode* node) {
 		node->type = INFREQUENT_NODE;
 	}
 	else if (itemset_is_a_generator(node->itemset, node->support)) {
+		if(node->type != GENERATOR_NODE)
+			NBR_GENERATOR_NODES++;
 		node->type = GENERATOR_NODE;
 	}
 	else {
@@ -124,6 +175,40 @@ bool has_child(CETNode* node, uint32_t maxitem) {
 	return node->children->find(maxitem) != node->children->end();
 }
 
+void clean_children(CETNode* node) {
+	if (node->children) {
+		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+			delete child.second;
+		}
+		delete node->children;
+		node->children = new std::map<uint32_t, CETNode*>();
+	}
+}
+
+void remove_child(CETNode* node, uint32_t item) {
+	auto it = node->children->find(item);
+	if (it != node->children->end()) {
+		delete it->second;
+		node->children->erase(it);
+	}
+}
+
+void clean(CETNode* node) {
+	clean_children(node);
+
+	for (const std::pair<uint32_t, CETNode*>& sibling : *node->parent->children) {
+		if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem < node->maxitem) {
+			if (has_child(sibling.second, node->maxitem)) {
+
+				CETNode* child = (*sibling.second->children)[node->maxitem];
+				if (child->type == GENERATOR_NODE) {
+					clean(child);
+				}
+				remove_child(sibling.second, child->maxitem);
+			}
+		}
+	}
+}
 
 //Below are utility functions for Moment (non in algorithm). TODO: Still need to add exit and error codes
 
@@ -156,7 +241,8 @@ bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t
 		queue.pop();
 
 		if (node->itemset->size() > 0) {
-			if (!is_contained_strict(node->itemset, itemset))
+			//if (!is_contained_strict(node->itemset, itemset))
+			if(!contains(itemset, node->itemset, true))
 				continue;
 		}
 

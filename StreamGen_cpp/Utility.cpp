@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * check if _a is contained in _b
+ * check if _b is contained in _a
 **/
 bool contains(const std::vector<uint32_t>* const _a, const std::vector<uint32_t>* const _b, const bool _strict) {
   if ((!_strict && _a->size() == _b->size()) || _a->size() > _b->size()) {

@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
         if (window_size != 0 && i >= window_size) {
             //delete
             Transaction<uint32_t> old_transaction = window.front();
-            Deletion(1 + (i - window_size), old_transaction.data(), minsup, &ROOT, &EQ_TABLE);
+            Deletion(1 + (i - window_size), old_transaction.data());
             //std::cout << "removed something " << std::endl;
             window.pop();
         }

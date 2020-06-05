@@ -30,16 +30,19 @@ const uint8_t INFREQUENT_NODE   = 0x01;
 const uint8_t UNPROMISSING_NODE = 0x02;
 const uint8_t GENERATOR_NODE     = 0x03;
 
-void Explore(CETNode* const _node);
+void Explore(CETNode* const node);
 
 // void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void Addition(const uint32_t tid, std::vector<uint32_t>* transaction);
 
-void Deletion(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
+void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction);
 
 void identify(CETNode* node);
 void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist);
 bool has_child(CETNode* node, uint32_t maxitem);
+void clean_children(CETNode* node);
+void remove_child(CETNode* node, uint32_t item);
+void clean(CETNode* node);
 
 // utility
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist);
