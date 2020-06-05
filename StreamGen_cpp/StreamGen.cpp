@@ -148,27 +148,60 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 }
 
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
-	std::stack<CETNode*> stack;
-	stack.push(&ROOT);
+	std::queue<CETNode*> queue;
+	queue.push(&ROOT);
 
-	while (!stack.empty()) {
-		CETNode* node = stack.top();
-		stack.pop();
-		if (!node->children)
-			continue;
+	while (!queue.empty()) {
+		CETNode* node = queue.front();
+		queue.pop();
+
+		if (node->itemset->size() > 0) {
+			if (!is_contained_strict(node->itemset, itemset))
+				continue;
+		}
+
+		if (node->type != GENERATOR_NODE)
+			return false;
+		if (node->support == refsup)
+			return false;
 		
-		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
-			if (contains(child.second->itemset, itemset, true)) {
-				if (child.second->type != GENERATOR_NODE)
-					return false;
-				if (child.second->support == refsup)
-					return false;
-				stack.push(child.second);
+		if (node->children) {
+			for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+				queue.push(child.second);
 			}
 		}
 	}
 	
 	return true;
+}
+
+bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference) {
+	uint32_t match = 0;
+
+	for (const uint32_t cmp : *compared) {
+		bool any = false;
+		for (const uint32_t ref : *reference) {
+			if (ref == cmp) {
+				match++;
+				any = true;
+			}
+		}
+		if (!any)
+			return false;
+	}
+
+	if (match > 0 && match < reference->size()) {
+		/*std::cout << " compared ";
+		for (const uint32_t i : *compared)
+			std::cout << i << " ";
+		std::cout << " is in reference ";
+		for (const uint32_t i : *reference)
+			std::cout << i << " ";
+		std::cout << std::endl << std::endl;*/
+		return true;
+	}
+	
+	return false;
 }
 
 /*
@@ -309,7 +342,7 @@ void update_cetnode_in_hashmap(CETNode* const _node, std::map<long, std::vector<
 		}
 		_EQ_TABLE->find(_node->hash)->second->at(_node->itemset->size())->push_back(_node);
 	}
-};
+};*/
 
 void print_cet_node(CETNode* const _node) {
 	std::vector<uint32_t>::iterator it = _node->itemset->begin();
@@ -317,4 +350,4 @@ void print_cet_node(CETNode* const _node) {
 		std::cout << *it << ", ";
 	}
 	std::cout << std::endl;
-}*/
+}

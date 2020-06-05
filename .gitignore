@@ -8,3 +8,5 @@
 *.ilk
 *.tlog
 StreamGen_cpp/output.txt
+
+*.enc
