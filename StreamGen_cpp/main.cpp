@@ -131,10 +131,10 @@ int main(int argc, char *argv[]) {
 
         if (node->type == GENERATOR_NODE) {
             output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-        }
+        }/*
         else {
             output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-        }
+        }*/
 
         if (node->children) {
             for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
