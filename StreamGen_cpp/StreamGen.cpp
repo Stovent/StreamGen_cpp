@@ -139,9 +139,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				else {
 					if (node->type == GENERATOR_NODE && node->children) {
 						for (std::map<uint32_t, CETNode*>::const_reverse_iterator child = node->children->crbegin(); child != node->children->crend(); child++) {
-							if (child->second->type == GENERATOR_NODE) {
-								queue.push(child->second);
-							}
+							queue.push(child->second);
 						}
 					}
 				}
@@ -185,13 +183,12 @@ void clean_children(CETNode* node) {
 		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
 			delete child.second;
 		}
-		delete node->children;
-		node->children = new std::map<uint32_t, CETNode*>();
+		node->children->clear();
 	}
 }
 
 void remove_child(CETNode* node, uint32_t item) {
-	auto it = node->children->find(item);
+	std::map<uint32_t, CETNode*>::iterator it = node->children->find(item);
 	if (it != node->children->end()) {
 		delete it->second;
 		node->children->erase(it);
@@ -209,7 +206,7 @@ void clean(CETNode* node) {
 				if (child->type == GENERATOR_NODE) {
 					clean(child);
 				}
-				remove_child(sibling.second, child->maxitem);
+				remove_child(child->parent, child->maxitem);
 			}
 		}
 	}
