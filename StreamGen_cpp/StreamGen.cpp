@@ -122,6 +122,9 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		}
 		else if (intersec->size() == node->itemset->size()) {
 			node->support--;
+			if (node->tidlist)
+				node->tidlist->erase(std::find(node->tidlist->begin(), node->tidlist->end(), tid));
+			node->tidsum -= tid;
 			if (node->type == INFREQUENT_NODE && node->support == 0) {
 				remove_child(node->parent, node->maxitem);
 			}
