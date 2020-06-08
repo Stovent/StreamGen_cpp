@@ -10,15 +10,10 @@
 struct CETNode {
 	uint8_t type;
 	uint32_t support;
-	// uint32_t item;
 	uint32_t maxitem; // theorically, item and maxitem should refer to the same item.
 					  // is using children[children->size() - 1] a better solution?
 	uint32_t tidsum = 0;
 	uint32_t id;
-
-	// there is no hash in StreamGen
-	// long hash;
-	// long oldHash;
 
 	std::vector<uint32_t>* itemset;
 	std::map<uint32_t, CETNode*>* children;
@@ -31,10 +26,7 @@ const uint8_t UNPROMISSING_NODE = 0x02;
 const uint8_t GENERATOR_NODE     = 0x03;
 
 void Explore(CETNode* const node);
-
-// void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void Addition(const uint32_t tid, std::vector<uint32_t>* transaction);
-
 void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction);
 
 void identify(CETNode* node);
@@ -48,13 +40,13 @@ void clean(CETNode* node);
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist);
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
 bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference);
-
+/*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void prune_children(CETNode* const _node, const uint32_t _tid, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void remove_from_class(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void update_cetnode_in_hashmap(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
-void print_cet_node(CETNode* const _node);
+void print_cet_node(CETNode* const _node);*/
 
 
 //error codes

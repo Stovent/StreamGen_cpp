@@ -21,11 +21,10 @@
 #endif
 
 uint32_t CET_NODE_ID = 0;
-uint32_t NBR_NODES = 0;
-uint32_t NBR_GENERATOR_NODES = 0;
+uint32_t NBR_GENERATOR_NODES = 1; // root is always generator
 uint32_t minsup = 0;
 CETNode ROOT = CETNode();
-std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
+std::map<uint32_t, std::map<uint32_t, CETNode*>> GENERATORS; // <tidsum, <itemset size, node>>
 
 static std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
     std::string str;
@@ -45,11 +44,13 @@ int main(int argc, char *argv[]) {
     const uint32_t window_size = strtoul(argv[1], 0, 10);//1500
     const uint32_t MAX_ATTRIBUTES = strtoul(argv[2], 0, 10);//100001
     minsup = strtoul(argv[3], 0, 10);//1
+
     std::ifstream input(argv[4]);
     if (!input.is_open()) {
         std::cout << "Cannot open input file " << argv[4] << std::endl;
         return 1;
     }
+
     std::ofstream output(argv[5]);
     if (!output.is_open()) {
         std::cout << "Cannot open output file " << argv[5] << std::endl;
@@ -64,11 +65,8 @@ int main(int argc, char *argv[]) {
     ROOT.tidsum = 0;
     ROOT.maxitem = 0;
     ROOT.type = GENERATOR_NODE;
-    std::map<long, std::vector<std::vector<CETNode*>*>*> EQ_TABLE = std::map<long, std::vector<std::vector<CETNode*>*>*>();
-    //uint32_t minsup = 0;
 
-    //const uint32_t MAX_ATTRIBUTES = 1001;
-    //initialiser l'arbre (autant de noeuds de d'items)
+    //initialiser l'arbre (autant de noeuds que d'items)
     //ou on peut le faire a chaque trx ? si nouvel item, on rajoute l'item dans l'arbre ?
     for (int i = 0; i != MAX_ATTRIBUTES; ++i) {
         CETNode* atom = new CETNode();
@@ -77,34 +75,29 @@ int main(int argc, char *argv[]) {
         atom->maxitem = i;
         atom->itemset = new std::vector<uint32_t>();
         atom->itemset->push_back(i);
-        atom->type = INFREQUENT_NODE;//? a verifier, mais ca se tient
+        atom->type = INFREQUENT_NODE;
         atom->tidlist = new std::vector<uint32_t>();// [0];
         atom->tidsum = 0;
         atom->id = ++CET_NODE_ID;
-        // atom->hash = 0;
-        // atom->oldHash = 0;
         atom->support = 0;
-        NBR_NODES += 1;
     }
 
     char s[10000];
     uint32_t i = 0;
     while (input.getline(s, 10000)) {
         char *pch = strtok(s, " ");
-        //if (i > 9998) break;
+
         if (window_size != 0 && i >= window_size) {
-            //delete
             Transaction<uint32_t> old_transaction = window.front();
-            Deletion(1 + (i - window_size), old_transaction.data());
-            //std::cout << "removed something " << std::endl;
             window.pop();
+
+            Deletion(1 + (i - window_size), old_transaction.data());
         }
+
         Transaction<uint32_t> new_transaction = Transaction<uint32_t>(pch, " ", 0);
-        //new_transaction.load(pch, " ", 0);
-        //add
-        //std::cout << "added something " << std::endl;
-        Addition(i + 1, new_transaction.data());
         window.push(new_transaction);
+
+        Addition(i + 1, new_transaction.data());
         i += 1;
 
         if (i % 500 == 0){
@@ -122,8 +115,9 @@ int main(int argc, char *argv[]) {
 
     printf("Stream completed in %0.2f sec, ", (clock() - start) / (double)CLOCKS_PER_SEC);
     std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
-    output << " node_id supp itemset" << std::endl;
+
     // export generators for debug
+    output << " node_id supp itemset" << std::endl;
     std::queue<CETNode*> queue;
     queue.push(&ROOT);
     while (!queue.empty()) {
@@ -154,22 +148,6 @@ int main(int argc, char *argv[]) {
         //nettoyer, children, itemset
         //y aller directement DFS
     }
-
-    //nettoyage de la map (TODO: put this in a function)
-    {
-        std::map<long, std::vector<std::vector<CETNode*>*>*>::iterator it = EQ_TABLE.begin();
-        for (; it != EQ_TABLE.end(); ++it) {
-            std::vector<std::vector<CETNode*>*>* eq_class_stratified = it->second;
-            std::vector<std::vector<CETNode*>*>::iterator eq_class_stratified_it = eq_class_stratified->begin();
-            for (; eq_class_stratified_it != eq_class_stratified->end(); ++eq_class_stratified_it) {
-            std::vector<CETNode*>* eq_class = *eq_class_stratified_it;
-            delete eq_class;//Not necessary to clean referenced node pointers, they are cleaned below with the tree
-            }
-            delete eq_class_stratified;
-        }
-    }
-
-
 
 #ifdef _WIN32
     //PROCESS_MEMORY_COUNTERS_EX info;

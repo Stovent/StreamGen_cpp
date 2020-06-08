@@ -5,11 +5,10 @@
 #include <stack>
 
 extern uint32_t CET_NODE_ID;
-extern uint32_t NBR_NODES;
 extern uint32_t NBR_GENERATOR_NODES;
 extern uint32_t minsup;
 extern CETNode ROOT;
-extern std::map<uint32_t, CETNode*> CLOSED_ITEMSETS;
+extern std::map<uint32_t, std::map<uint32_t, CETNode*>> GENERATORS; // <tidsum, <itemset size, node>>
 
 void Explore(CETNode* const node) {
 	std::map<uint32_t, CETNode*>* siblings = node->parent->children;
@@ -106,7 +105,6 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				identify(node);
 				if (node->type == UNPROMISSING_NODE) {
 					clean(node);
-					NBR_GENERATOR_NODES--;
 				}
 				else {
 					if (node->children) {
@@ -131,7 +129,6 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				if (node->support < minsup) {
 					if (node->type == GENERATOR_NODE) {
 						clean(node);
-						NBR_GENERATOR_NODES--;
 					}
 					node->type = INFREQUENT_NODE;
 				}
@@ -151,14 +148,21 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 
 void identify(CETNode* node) {
 	if (node->support < minsup) {
+		if (node->type == GENERATOR_NODE) {
+			NBR_GENERATOR_NODES--;
+		}
 		node->type = INFREQUENT_NODE;
 	}
 	else if (itemset_is_a_generator(node->itemset, node->support)) {
-		if(node->type != GENERATOR_NODE)
+		if (node->type != GENERATOR_NODE) {
 			NBR_GENERATOR_NODES++;
+		}
 		node->type = GENERATOR_NODE;
 	}
 	else {
+		if (node->type == GENERATOR_NODE) {
+			NBR_GENERATOR_NODES--;
+		}
 		node->type = UNPROMISSING_NODE;
 	}
 }
@@ -221,6 +225,7 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	node->tidlist = tidlist;
 	node->support = node->tidlist->size();
 	node->children = nullptr;
+	node->type = INFREQUENT_NODE;
 
 	node->tidsum = 0;
 	for (const uint32_t tid : *node->tidlist) {
@@ -429,7 +434,7 @@ void update_cetnode_in_hashmap(CETNode* const _node, std::map<long, std::vector<
 		}
 		_EQ_TABLE->find(_node->hash)->second->at(_node->itemset->size())->push_back(_node);
 	}
-};*/
+};
 
 void print_cet_node(CETNode* const _node) {
 	std::vector<uint32_t>::iterator it = _node->itemset->begin();
@@ -437,4 +442,4 @@ void print_cet_node(CETNode* const _node) {
 		std::cout << *it << ", ";
 	}
 	std::cout << std::endl;
-}
+}*/
