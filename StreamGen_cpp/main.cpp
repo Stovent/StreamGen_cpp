@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
 
     ROOT.children = new std::map<uint32_t, CETNode*>();
     ROOT.itemset = new std::vector<uint32_t>();
+    ROOT.tidlist = new std::vector<uint32_t>();
     ROOT.tidsum = 0;
     ROOT.maxitem = 0;
     ROOT.type = GENERATOR_NODE;
@@ -130,7 +131,7 @@ int main(int argc, char *argv[]) {
         queue.pop();
 
         if (node->type == GENERATOR_NODE) {
-            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
         }/*
         else {
             output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;

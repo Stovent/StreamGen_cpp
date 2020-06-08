@@ -25,7 +25,6 @@ void Explore(CETNode* const node) {
 	}
 };
 
-//void Addition(const uint32_t _tid, std::vector<uint32_t>* _transaction, const uint32_t _minsupp, CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
 void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 	std::queue<CETNode*> queue;
 	queue.push(&ROOT);
