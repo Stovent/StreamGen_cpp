@@ -3,9 +3,10 @@
 
 //#include "../CommonUtility/Utility.h"
 
-#include <map>
-#include <vector>
 #include <algorithm>
+#include <map>
+#include <string>
+#include <vector>
 
 struct CETNode {
 	uint8_t type;
@@ -31,7 +32,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction);
 
 void identify(CETNode* node, bool _identify);
 void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
-bool has_child(CETNode* node, uint32_t maxitem);
+bool has_child(const CETNode* node, const uint32_t maxitem);
 void clean_children(CETNode* node);
 void remove_child(CETNode* node, uint32_t item);
 void clean(CETNode* node);
@@ -40,6 +41,7 @@ void clean(CETNode* node);
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
 bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference);
+std::string itemset_to_string(const std::vector<uint32_t>* itemset);
 /*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);

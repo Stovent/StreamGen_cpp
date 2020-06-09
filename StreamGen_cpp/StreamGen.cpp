@@ -175,7 +175,7 @@ void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist, 
 	node->children->emplace(maxitem, create_node(node, maxitem, tidlist, _identify));
 }
 
-bool has_child(CETNode* node, uint32_t maxitem) {
+bool has_child(const CETNode* node, const uint32_t maxitem) {
 	if (!node->children)
 		return false;
 	
@@ -216,7 +216,7 @@ void clean(CETNode* node) {
 	}
 }
 
-//Below are utility functions for Moment (non in algorithm). TODO: Still need to add exit and error codes
+//Below are utility functions for StreamGen (non in algorithm).
 
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify) {
 	CETNode* node = new CETNode;
@@ -300,6 +300,14 @@ bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vecto
 	}
 	
 	return false;
+}
+
+std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
+	std::string str;
+	for (const uint32_t item : *itemset) {
+		str += std::to_string(item) + " ";
+	}
+	return str;
 }
 
 /*
