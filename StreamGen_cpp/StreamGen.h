@@ -29,15 +29,15 @@ void Explore(CETNode* const node);
 void Addition(const uint32_t tid, std::vector<uint32_t>* transaction);
 void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction);
 
-void identify(CETNode* node);
-void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist);
+void identify(CETNode* node, bool _identify);
+void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
 bool has_child(CETNode* node, uint32_t maxitem);
 void clean_children(CETNode* node);
 void remove_child(CETNode* node, uint32_t item);
 void clean(CETNode* node);
 
 // utility
-CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist);
+CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
 bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference);
 /*

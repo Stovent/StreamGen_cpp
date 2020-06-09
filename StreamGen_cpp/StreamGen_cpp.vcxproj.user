@@ -9,7 +9,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>200 17000 1 $(SolutionDir)\datasets\retail_reduced.dat output.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>0 17000 1 $(SolutionDir)\datasets\retail_reduced.dat output.txt</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

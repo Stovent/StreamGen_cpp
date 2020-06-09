@@ -100,8 +100,9 @@ int main(int argc, char *argv[]) {
         Addition(i + 1, new_transaction.data());
         i += 1;
 
-        if (i % 500 == 0){
-        }
+        //if (i % 50 == 0){
+        //  break;
+        //}
             std::cout << i << " transaction(s) processed" << std::endl;
 
 #ifdef DEBUG
