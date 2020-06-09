@@ -8,7 +8,7 @@ extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_GENERATOR_NODES;
 extern uint32_t minsup;
 extern CETNode ROOT;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <tidsum, <itemset size, node>>
+extern std::map<uint32_t, std::vector<CETNode*>> GENERATORS; // <itemset size, nodes>
 
 void Explore(CETNode* const node) {
 	std::map<uint32_t, CETNode*>* siblings = node->parent->children;
@@ -53,12 +53,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 			node->support++;
 			if (node->tidlist)
 				node->tidlist->push_back(tid);
-
-			uint32_t old_tidsum = node->tidsum;
 			node->tidsum += tid;
-			if (node->type == GENERATOR_NODE && node->id) {
-				update_generator(node, old_tidsum);
-			}
 
 			if (node->type == UNPROMISSING_NODE)
 				continue;
@@ -128,12 +123,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 			node->support--;
 			if (node->tidlist)
 				node->tidlist->erase(std::find(node->tidlist->begin(), node->tidlist->end(), tid));
-
-			uint32_t old_tidsum = node->tidsum;
 			node->tidsum -= tid;
-			if (node->type == GENERATOR_NODE && node->id) {
-				update_generator(node, old_tidsum);
-			}
 
 			if (node->type == INFREQUENT_NODE && node->support == 0) {
 				remove_child(node->parent, node->maxitem);
@@ -255,28 +245,10 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 }
 
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
-	std::queue<CETNode*> queue;
-	queue.push(&ROOT);
-
-	while (!queue.empty()) {
-		CETNode* node = queue.front();
-		queue.pop();
-
-		if (/*node->itemset->size() > 0*/true) {
-			//if (!is_contained_strict(node->itemset, itemset))
-			if(!contains(itemset, node->itemset, true))
-				continue;
-		}
-
-		if (node->type != GENERATOR_NODE)
-			return false;
-		if (node->support == refsup)
-			return false;
-		
-		if (node->children) {
-			for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
-				queue.push(child.second);
-			}
+	for (const CETNode* node : GENERATORS[itemset->size() - 1]) {
+		if (contains(itemset, node->itemset, true)) {
+			if (node->support == refsup)
+				return false;
 		}
 	}
 	
@@ -321,17 +293,11 @@ std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
 }
 
 void add_generator(CETNode* node) {
-	GENERATORS[node->tidsum][node->itemset->size()].push_back(node);
-}
-
-void update_generator(CETNode* node, uint32_t old_tidsum) {
-	std::vector<CETNode*>& v = GENERATORS[old_tidsum][node->itemset->size()];
-	v.erase(std::find(v.begin(), v.end(), node));
-	GENERATORS[node->tidsum][node->itemset->size()].push_back(node);
+	GENERATORS[node->itemset->size()].push_back(node);
 }
 
 void remove_generator(CETNode* node) {
-	std::vector<CETNode*>& v = GENERATORS[node->tidsum][node->itemset->size()];
+	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()];
 	v.erase(std::find(v.begin(), v.end(), node));
 }
 

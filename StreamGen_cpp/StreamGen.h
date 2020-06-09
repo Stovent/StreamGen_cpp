@@ -43,7 +43,6 @@ bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t
 bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference);
 std::string itemset_to_string(const std::vector<uint32_t>* itemset);
 void add_generator(CETNode* node);
-void update_generator(CETNode* node, uint32_t old_tidsum);
 void remove_generator(CETNode* node);
 /*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
