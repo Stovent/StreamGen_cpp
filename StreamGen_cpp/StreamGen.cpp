@@ -19,7 +19,7 @@ void Explore(CETNode* const node) {
 		}
 		else if (sibling.second->type == GENERATOR_NODE && sibling.second->maxitem < node->maxitem) {
 			if (!has_child(sibling.second, node->maxitem)) {
-				new_child(sibling.second, node->maxitem, inter(sibling.second->tidlist, node->tidlist), false);
+				new_child(sibling.second, node->maxitem, inter(sibling.second->tidlist, node->tidlist), true);
 			}
 		}
 	}
