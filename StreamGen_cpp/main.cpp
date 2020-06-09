@@ -26,14 +26,6 @@ uint32_t minsup = 0;
 CETNode ROOT = CETNode();
 std::map<uint32_t, std::map<uint32_t, CETNode*>> GENERATORS; // <tidsum, <itemset size, node>>
 
-static std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
-    std::string str;
-    for (const uint32_t item : *itemset) {
-        str += std::to_string(item) + " ";
-    }
-    return str;
-}
-
 int main(int argc, char *argv[]) {
     if (argc != 6) {
         std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile outputfile" << std::endl;
