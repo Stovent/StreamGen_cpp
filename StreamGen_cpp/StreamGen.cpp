@@ -36,7 +36,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
 		if (intersec->size() == node->itemset->size() - 1) {
 			if (node->type == UNPROMISSING_NODE) {
-				identify(node, true);
+				identify(node);
 				if (node->type == UNPROMISSING_NODE)
 					continue;
 
@@ -61,7 +61,7 @@ void Addition(const uint32_t tid, std::vector<uint32_t>* transaction) {
 				if (node->support < minsup)
 					continue;
 
-				identify(node, true);
+				identify(node);
 				if (node->type == GENERATOR_NODE) {
 					Explore(node);
 				}
@@ -103,7 +103,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 		std::vector<uint32_t>* intersec = inter(node->itemset, transaction);
 		if (intersec->size() == node->itemset->size() - 1) {
 			if (node->type == GENERATOR_NODE) {
-				identify(node, true);
+				identify(node);
 				if (node->type == UNPROMISSING_NODE) {
 					clean(node);
 				}
@@ -147,23 +147,17 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 	}
 };
 
-void identify(CETNode* node, bool _identify) {
+void identify(CETNode* node) {
 	if (node->support < minsup) {
-		if (node->type == GENERATOR_NODE) {
-			//NBR_GENERATOR_NODES--;
-		}
 		node->type = INFREQUENT_NODE;
 	}
 	else if (itemset_is_a_generator(node->itemset, node->support)) {
-		if (node->type != GENERATOR_NODE/* && _identify*/) {
+		if (node->type != GENERATOR_NODE) {
 			NBR_GENERATOR_NODES++;
 		}
 		node->type = GENERATOR_NODE;
 	}
 	else {
-		if (node->type == GENERATOR_NODE) {
-			//NBR_GENERATOR_NODES--;
-		}
 		node->type = UNPROMISSING_NODE;
 	}
 }
@@ -238,7 +232,7 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	node->itemset = new std::vector<uint32_t>(parent->itemset->begin(), parent->itemset->end());
 	node->itemset->push_back(maxitem);
 	if (_identify) {
-		identify(node, _identify);
+		identify(node);
 	}
 	else if(node->support > minsup) {
 		node->type = UNPROMISSING_NODE;

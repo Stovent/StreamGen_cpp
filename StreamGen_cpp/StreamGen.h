@@ -30,7 +30,7 @@ void Explore(CETNode* const node);
 void Addition(const uint32_t tid, std::vector<uint32_t>* transaction);
 void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction);
 
-void identify(CETNode* node, bool _identify);
+void identify(CETNode* node);
 void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
 bool has_child(const CETNode* node, const uint32_t maxitem);
 void clean_children(CETNode* node);
