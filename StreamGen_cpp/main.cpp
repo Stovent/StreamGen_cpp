@@ -93,7 +93,6 @@ int main(int argc, char *argv[]) {
         i += 1;
 
         //if (i % 50 == 0){
-        //  break;
         //}
             std::cout << i << " transaction(s) processed" << std::endl;
 

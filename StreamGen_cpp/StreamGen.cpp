@@ -155,7 +155,7 @@ void identify(CETNode* node, bool _identify) {
 		node->type = INFREQUENT_NODE;
 	}
 	else if (itemset_is_a_generator(node->itemset, node->support)) {
-		if (node->type != GENERATOR_NODE && _identify) {
+		if (node->type != GENERATOR_NODE/* && _identify*/) {
 			NBR_GENERATOR_NODES++;
 		}
 		node->type = GENERATOR_NODE;
