@@ -1,5 +1,5 @@
-#ifndef MOMENT_ALG_H
-#define MOMENT_ALG_H
+#ifndef STREAMGEN_H
+#define STREAMGEN_H
 
 //#include "../CommonUtility/Utility.h"
 
@@ -62,4 +62,4 @@ const uint32_t ERROR_DELETE_REMOVING_INFREQUENT_CI = 0x40;//Removing some infreq
 const uint32_t ERROR_NBR_CLOSED_NODES_DOES_NOT_MATCH_CI_SET_SIZE = 0x80;
 const uint32_t ERROR_ID_NEW_CI_ALREADY_REGISTERED = 0x100;
 const uint32_t ERROR_CANNOT_DELETE_UNREGISTRED_CI = 0x200;
-#endif
+#endif // STREAMGEN_H
