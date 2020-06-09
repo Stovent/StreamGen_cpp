@@ -24,7 +24,7 @@ uint32_t CET_NODE_ID = 0;
 uint32_t NBR_GENERATOR_NODES = 0; // root is always generator
 uint32_t minsup = 0;
 CETNode ROOT = CETNode();
-std::map<uint32_t, std::map<uint32_t, CETNode*>> GENERATORS; // <tidsum, <itemset size, node>>
+std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <tidsum, <itemset size, nodes>>
 
 int main(int argc, char *argv[]) {
     if (argc != 6) {
@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "  minsup: " << minsup << "; window_size: " << window_size << std::endl;
 
+    ROOT.id = 0;
     ROOT.children = new std::map<uint32_t, CETNode*>();
     ROOT.itemset = new std::vector<uint32_t>();
     ROOT.tidlist = new std::vector<uint32_t>();
