@@ -150,7 +150,7 @@ void Deletion(const uint32_t tid, std::vector<uint32_t>* transaction) {
 void identify(CETNode* node, bool _identify) {
 	if (node->support < minsup) {
 		if (node->type == GENERATOR_NODE) {
-			NBR_GENERATOR_NODES--;
+			//NBR_GENERATOR_NODES--;
 		}
 		node->type = INFREQUENT_NODE;
 	}
@@ -162,7 +162,7 @@ void identify(CETNode* node, bool _identify) {
 	}
 	else {
 		if (node->type == GENERATOR_NODE) {
-			NBR_GENERATOR_NODES--;
+			//NBR_GENERATOR_NODES--;
 		}
 		node->type = UNPROMISSING_NODE;
 	}
@@ -200,6 +200,8 @@ void remove_child(CETNode* node, uint32_t item) {
 }
 
 void clean(CETNode* node) {
+	NBR_GENERATOR_NODES--;
+
 	clean_children(node);
 
 	for (const std::pair<uint32_t, CETNode*>& sibling : *node->parent->children) {
