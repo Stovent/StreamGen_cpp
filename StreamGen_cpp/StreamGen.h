@@ -15,6 +15,7 @@ struct CETNode {
 					  // is using children[children->size() - 1] a better solution?
 	uint32_t tidsum = 0;
 	uint32_t id;
+	uint32_t itemsum;
 
 	std::vector<uint32_t>* itemset;
 	std::map<uint32_t, CETNode*>* children;
@@ -39,11 +40,12 @@ void clean(CETNode* node);
 
 // utility
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
-bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
+bool node_is_a_generator(const CETNode* node);
 bool is_contained_strict(const std::vector<uint32_t>* contained, const std::vector<uint32_t>* container);
 std::string itemset_to_string(const std::vector<uint32_t>* itemset);
 void add_generator(CETNode* node);
 void remove_generator(CETNode* node);
+uint32_t get_itemsum(const std::vector<uint32_t>* itemset);
 /*
 void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);
 void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE);

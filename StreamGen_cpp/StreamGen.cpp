@@ -8,7 +8,7 @@ extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_GENERATOR_NODES;
 extern uint32_t minsup;
 extern CETNode ROOT;
-extern std::map<uint32_t, std::vector<CETNode*>> GENERATORS; // <itemset size, nodes>
+extern std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <itemset size, <itemsum, nodes>>
 
 void Explore(CETNode* const node) {
 	std::map<uint32_t, CETNode*>* siblings = node->parent->children;
@@ -153,7 +153,7 @@ void identify(CETNode* node) {
 	if (node->support < minsup) {
 		node->type = INFREQUENT_NODE;
 	}
-	else if (itemset_is_a_generator(node->itemset, node->support)) {
+	else if (node_is_a_generator(node)) {
 		if (node->type != GENERATOR_NODE) {
 			NBR_GENERATOR_NODES++;
 			add_generator(node);
@@ -235,6 +235,8 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 
 	node->itemset = new std::vector<uint32_t>(parent->itemset->begin(), parent->itemset->end());
 	node->itemset->push_back(maxitem);
+	node->itemsum = get_itemsum(node->itemset);
+
 	if (_identify) {
 		identify(node);
 	}
@@ -244,12 +246,21 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	return node;
 }
 
-bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
-	for (const CETNode* node : GENERATORS[itemset->size() - 1]) {
-		if (contains(itemset, node->itemset, true)) {
-			if (node->support == refsup)
-				return false;
+bool node_is_a_generator(const CETNode* node) {
+	uint32_t itemsum = node->itemsum;
+	uint32_t old_item = 0;
+
+	for (std::vector<uint32_t>::iterator it = node->itemset->begin(); it != node->itemset->end(); it++) {
+		itemsum -= *it;
+		old_item = *it;
+		for (const CETNode* gen : GENERATORS[node->itemset->size() - 1][itemsum]) {
+			if (contains(node->itemset, gen->itemset, true)) { // can this be removed ?
+				if (gen->support == node->support) {
+					return false;
+				}
+			}
 		}
+		itemsum += old_item;
 	}
 	
 	return true;
@@ -293,12 +304,20 @@ std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
 }
 
 void add_generator(CETNode* node) {
-	GENERATORS[node->itemset->size()].push_back(node);
+	GENERATORS[node->itemset->size()][node->itemsum].push_back(node);
 }
 
 void remove_generator(CETNode* node) {
-	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()];
+	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()][node->itemsum];
 	v.erase(std::find(v.begin(), v.end(), node));
+}
+
+uint32_t get_itemsum(const std::vector<uint32_t>* itemset) {
+	uint32_t sum = 0;
+	for (const uint32_t item : *itemset) {
+		sum += item;
+	}
+	return sum;
 }
 
 /*
