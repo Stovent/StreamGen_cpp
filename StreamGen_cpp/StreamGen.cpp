@@ -255,12 +255,12 @@ bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t
 	return true;
 }
 
-bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference) {
+bool is_contained_strict(const std::vector<uint32_t>* contained, const std::vector<uint32_t>* container) {
 	uint32_t match = 0;
 
-	for (const uint32_t cmp : *compared) {
+	for (const uint32_t cmp : *contained) {
 		bool any = false;
-		for (const uint32_t ref : *reference) {
+		for (const uint32_t ref : *container) {
 			if (ref == cmp) {
 				match++;
 				any = true;
@@ -270,7 +270,7 @@ bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vecto
 			return false;
 	}
 
-	if (match > 0 && match < reference->size()) {
+	if (match > 0 && match < container->size()) {
 		/*std::cout << " compared ";
 		for (const uint32_t i : *compared)
 			std::cout << i << " ";

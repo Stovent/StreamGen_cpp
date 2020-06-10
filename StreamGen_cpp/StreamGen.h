@@ -40,7 +40,7 @@ void clean(CETNode* node);
 // utility
 CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify);
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup);
-bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference);
+bool is_contained_strict(const std::vector<uint32_t>* contained, const std::vector<uint32_t>* container);
 std::string itemset_to_string(const std::vector<uint32_t>* itemset);
 void add_generator(CETNode* node);
 void remove_generator(CETNode* node);
