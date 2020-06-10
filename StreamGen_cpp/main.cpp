@@ -27,8 +27,8 @@ CETNode ROOT = CETNode();
 std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <itemset size, <itemsum, nodes>>
 
 int main(int argc, char *argv[]) {
-    if (argc != 6) {
-        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile outputfile" << std::endl;
+    if (argc != 5 && argc != 6) {
+        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile [outputfile]" << std::endl;
         return 0;
     }
     clock_t start = clock(); clock_t running = clock();
@@ -43,10 +43,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::ofstream output(argv[5]);
-    if (!output.is_open()) {
-        std::cout << "Cannot open output file " << argv[5] << std::endl;
-        return 1;
+    std::ofstream output;
+    if (argc == 6) {
+        output.open(argv[5]);
+        if (!output.is_open()) {
+            std::cout << "Cannot open output file " << argv[5] << std::endl;
+        }
     }
 
     std::cout << "  minsup: " << minsup << "; window_size: " << window_size << std::endl;
@@ -94,9 +96,9 @@ int main(int argc, char *argv[]) {
         Addition(i + 1, new_transaction.data());
         i += 1;
 
-        //if (i % 50 == 0){
-        //}
+        if (i % 500 == 0){
             std::cout << i << " transaction(s) processed" << std::endl;
+        }
 
 #ifdef DEBUG
       if ((row % 1000 == 0 && row < 10001) || row % 10000 == 0) {
@@ -111,23 +113,25 @@ int main(int argc, char *argv[]) {
     std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
 
     // export generators for debug
-    output << " node_id supp itemset" << std::endl;
-    std::queue<CETNode*> queue;
-    queue.push(&ROOT);
-    while (!queue.empty()) {
-        CETNode* node = queue.front();
-        queue.pop();
+    if (output.is_open()) {
+        output << " node_id supp itemset" << std::endl;
+        std::queue<CETNode*> queue;
+        queue.push(&ROOT);
+        while (!queue.empty()) {
+            CETNode* node = queue.front();
+            queue.pop();
 
-        if (node->type == GENERATOR_NODE) {
-            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
-        }/*
-        else {
-            output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-        }*/
+            if (node->type == GENERATOR_NODE) {
+                output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
+            }/*
+            else {
+                output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+            }*/
 
-        if (node->children) {
-            for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
-                queue.push(child.second);
+            if (node->children) {
+                for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+                    queue.push(child.second);
+                }
             }
         }
     }
