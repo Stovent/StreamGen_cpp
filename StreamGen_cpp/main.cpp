@@ -59,7 +59,9 @@ int main(int argc, char *argv[]) {
     ROOT.tidlist = new std::vector<uint32_t>();
     ROOT.tidsum = 0;
     ROOT.maxitem = 0;
+    ROOT.itemsum = 0;
     ROOT.type = GENERATOR_NODE;
+    GENERATORS[0][0].push_back(&ROOT);
 
     //initialiser l'arbre (autant de noeuds que d'items)
     //ou on peut le faire a chaque trx ? si nouvel item, on rajoute l'item dans l'arbre ?

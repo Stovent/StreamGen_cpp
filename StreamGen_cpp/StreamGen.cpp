@@ -248,10 +248,16 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 
 bool node_is_a_generator(const CETNode* node) {
 	uint32_t itemsum = node->itemsum;
+	std::map<uint32_t, std::vector<CETNode*>>& generators = GENERATORS[node->itemset->size() - 1];
 
 	for (std::vector<uint32_t>::iterator it = node->itemset->begin(); it != node->itemset->end(); it++) {
 		itemsum -= *it;
-		for (const CETNode* gen : GENERATORS[node->itemset->size() - 1][itemsum]) {
+
+		std::map<uint32_t, std::vector<CETNode*>>::const_iterator git = generators.find(itemsum);
+		if (git == generators.end())
+			return false;
+
+		for (const CETNode* gen : generators[itemsum]) {
 			if (contains(node->itemset, gen->itemset, true)) { // can this be removed ?
 				if (gen->support == node->support) {
 					return false;
