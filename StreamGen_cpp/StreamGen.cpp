@@ -182,6 +182,9 @@ bool has_child(const CETNode* node, const uint32_t maxitem) {
 void clean_children(CETNode* node) {
 	if (node->children) {
 		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+			if (child.second->type == GENERATOR_NODE) {
+				remove_generator(child.second);
+			}
 			delete child.second;
 		}
 		node->children->clear();
