@@ -1,7 +1,6 @@
 #include "Transaction.h"
 #include "StreamGen.h"
 
-#include <cstdio>   //fopen, printf
 #include <cstdlib>  //atol
 #include <queue>    //sliding window
 #include <cstring>  //strtok
@@ -31,6 +30,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile [outputfile]" << std::endl;
         return 0;
     }
+
     clock_t start = clock(); clock_t running = clock();
     std::queue<Transaction<uint32_t>> window;
     const uint32_t window_size = strtoul(argv[1], 0, 10);//1500
@@ -94,9 +94,9 @@ int main(int argc, char *argv[]) {
 
         Transaction<uint32_t> new_transaction = Transaction<uint32_t>(pch, " ", 0);
         window.push(new_transaction);
+        i++;
 
-        Addition(i + 1, new_transaction.data());
-        i += 1;
+        Addition(i, new_transaction.data());
 
         if (i % 500 == 0){
             std::cout << i << " transaction(s) processed" << std::endl;
