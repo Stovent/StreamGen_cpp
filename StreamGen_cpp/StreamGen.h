@@ -18,6 +18,17 @@ struct CETNode {
 	std::map<uint32_t, CETNode*>* children;
 	CETNode* parent;
 	std::vector<uint32_t>* tidlist;
+	
+	~CETNode() {
+		delete itemset;
+		delete tidlist;
+		if (children) {
+			for (const std::pair<uint32_t, CETNode*> child : *children) {
+				delete child.second;
+			}
+		}
+		delete children;
+	}
 };
 
 const uint8_t INFREQUENT_NODE   = 0x01;
