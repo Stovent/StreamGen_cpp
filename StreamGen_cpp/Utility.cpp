@@ -26,9 +26,9 @@ bool contains(const std::vector<uint32_t>* const _a, const std::vector<uint32_t>
   return false;
 };
 
-std::vector<uint32_t>* inter(std::vector<uint32_t>* const _left_set, std::vector<uint32_t>* const _right_set){
-  std::vector<uint32_t>* smaller;
-  std::vector<uint32_t>* larger;
+std::vector<uint32_t>* inter(const std::vector<uint32_t>* _left_set, const std::vector<uint32_t>* _right_set){
+  const std::vector<uint32_t>* smaller;
+  const std::vector<uint32_t>* larger;
   if (_right_set->size() < _left_set->size()) {
     smaller = _right_set; larger = _left_set;
   }
@@ -39,10 +39,10 @@ std::vector<uint32_t>* inter(std::vector<uint32_t>* const _left_set, std::vector
   inter->resize(smaller->size());
   uint32_t curr = 0;
 
-  std::vector<uint32_t>::iterator it_smaller = smaller->begin();
+  std::vector<uint32_t>::const_iterator it_smaller = smaller->cbegin();
   
   for (; it_smaller != smaller->end(); ++it_smaller) {
-    std::vector<uint32_t>::iterator it_larger = larger->begin();
+    std::vector<uint32_t>::const_iterator it_larger = larger->cbegin();
     for (; it_larger != larger->end(); ++it_larger) {
       if (*it_larger == *it_smaller) {
         inter->at(curr) = *it_smaller;

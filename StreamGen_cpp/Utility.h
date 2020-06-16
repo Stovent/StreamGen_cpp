@@ -27,7 +27,7 @@ public:
 
 bool contains(const std::vector<uint32_t>* const _a, const std::vector<uint32_t>* const _b, const bool _strict);
 
-std::vector<uint32_t>* inter(std::vector<uint32_t>* const left_set, std::vector<uint32_t>* const right_set);
+std::vector<uint32_t>* inter(const std::vector<uint32_t>* left_set, const std::vector<uint32_t>* right_set);
 
 bool exactMatch(std::vector<uint32_t>* const _a, std::vector<uint32_t>* const _b);
 
