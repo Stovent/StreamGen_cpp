@@ -1,7 +1,6 @@
 #include "Transaction.h"
 #include "StreamGen.h"
 
-#include <cstdio>   //fopen, printf
 #include <cstdlib>  //atol
 #include <queue>    //sliding window
 #include <cstring>  //strtok
@@ -24,13 +23,14 @@ uint32_t CET_NODE_ID = 0;
 uint32_t NBR_GENERATOR_NODES = 1; // root is always generator
 uint32_t minsup = 0;
 CETNode ROOT = CETNode();
-std::map<uint32_t, std::vector<CETNode*>> GENERATORS; // <itemset size, nodes>
+std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <itemset size, <itemsum, nodes>>
 
 int main(int argc, char *argv[]) {
-    if (argc != 6) {
-        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile outputfile" << std::endl;
+    if (argc != 5 && argc != 6) {
+        std::cout << "Usage: StreamGen_cpp.exe window_size item_number minsup inputfile [outputfile]" << std::endl;
         return 0;
     }
+
     clock_t start = clock(); clock_t running = clock();
     std::queue<Transaction<uint32_t>> window;
     const uint32_t window_size = strtoul(argv[1], 0, 10);//1500
@@ -43,10 +43,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::ofstream output(argv[5]);
-    if (!output.is_open()) {
-        std::cout << "Cannot open output file " << argv[5] << std::endl;
-        return 1;
+    std::ofstream output;
+    if (argc == 6) {
+        output.open(argv[5]);
+        if (!output.is_open()) {
+            std::cout << "Cannot open output file " << argv[5] << std::endl;
+        }
     }
 
     std::cout << "  minsup: " << minsup << "; window_size: " << window_size << std::endl;
@@ -57,7 +59,9 @@ int main(int argc, char *argv[]) {
     ROOT.tidlist = new std::vector<uint32_t>();
     ROOT.tidsum = 0;
     ROOT.maxitem = 0;
+    ROOT.itemsum = 0;
     ROOT.type = GENERATOR_NODE;
+    GENERATORS[0][0].push_back(&ROOT);
 
     //initialiser l'arbre (autant de noeuds que d'items)
     //ou on peut le faire a chaque trx ? si nouvel item, on rajoute l'item dans l'arbre ?
@@ -72,6 +76,7 @@ int main(int argc, char *argv[]) {
         atom->tidlist = new std::vector<uint32_t>();// [0];
         atom->tidsum = 0;
         atom->id = ++CET_NODE_ID;
+        atom->itemsum = get_itemsum(atom->itemset);
         atom->support = 0;
     }
 
@@ -89,13 +94,13 @@ int main(int argc, char *argv[]) {
 
         Transaction<uint32_t> new_transaction = Transaction<uint32_t>(pch, " ", 0);
         window.push(new_transaction);
+        i++;
 
-        Addition(i + 1, new_transaction.data());
-        i += 1;
+        Addition(i, new_transaction.data());
 
-        //if (i % 50 == 0){
-        //}
+        if (i % 500 == 0){
             std::cout << i << " transaction(s) processed" << std::endl;
+        }
 
 #ifdef DEBUG
       if ((row % 1000 == 0 && row < 10001) || row % 10000 == 0) {
@@ -110,24 +115,26 @@ int main(int argc, char *argv[]) {
     std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
 
     // export generators for debug
-    output << " node_id supp itemset" << std::endl;
-    std::queue<CETNode*> queue;
-    queue.push(&ROOT);
-    while (!queue.empty()) {
-        CETNode* node = queue.front();
-        queue.pop();
 
-        if (node->type == GENERATOR_NODE) {
-            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-              //<< "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
-        }/*
-        else {
-            output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-        }*/
+    if (output.is_open()) {
+        output << " node_id supp itemset" << std::endl;
+        std::queue<CETNode*> queue;
+        queue.push(&ROOT);
+        while (!queue.empty()) {
+            CETNode* node = queue.front();
+            queue.pop();
 
-        if (node->children) {
-            for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
-                queue.push(child.second);
+            if (node->type == GENERATOR_NODE) {
+                output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
+            }/*
+            else {
+                output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+            }*/
+
+            if (node->children) {
+                for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+                    queue.push(child.second);
+                }
             }
         }
     }

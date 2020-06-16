@@ -8,7 +8,7 @@ extern uint32_t CET_NODE_ID;
 extern uint32_t NBR_GENERATOR_NODES;
 extern uint32_t minsup;
 extern CETNode ROOT;
-extern std::map<uint32_t, std::vector<CETNode*>> GENERATORS; // <itemset size, nodes>
+extern std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <itemset size, <itemsum, nodes>>
 
 void Explore(CETNode* const node) {
 	std::map<uint32_t, CETNode*>* siblings = node->parent->children;
@@ -153,7 +153,7 @@ void identify(CETNode* node) {
 	if (node->support < minsup) {
 		node->type = INFREQUENT_NODE;
 	}
-	else if (itemset_is_a_generator(node->itemset, node->support)) {
+	else if (node_is_a_generator(node)) {
 		if (node->type != GENERATOR_NODE) {
 			NBR_GENERATOR_NODES++;
 			add_generator(node);
@@ -165,11 +165,11 @@ void identify(CETNode* node) {
 	}
 }
 
-void new_child(CETNode* node, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify) {
-	if (!node->children) {
-		node->children = new std::map<uint32_t, CETNode*>();
+void new_child(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* tidlist, bool _identify) {
+	if (!parent->children) {
+		parent->children = new std::map<uint32_t, CETNode*>();
 	}
-	node->children->emplace(maxitem, create_node(node, maxitem, tidlist, _identify));
+	parent->children->emplace(maxitem, create_node(parent, maxitem, tidlist, _identify));
 }
 
 bool has_child(const CETNode* node, const uint32_t maxitem) {
@@ -182,6 +182,9 @@ bool has_child(const CETNode* node, const uint32_t maxitem) {
 void clean_children(CETNode* node) {
 	if (node->children) {
 		for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+			if (child.second->type == GENERATOR_NODE) {
+				remove_generator(child.second);
+			}
 			delete child.second;
 		}
 		node->children->clear();
@@ -235,6 +238,8 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 
 	node->itemset = new std::vector<uint32_t>(parent->itemset->begin(), parent->itemset->end());
 	node->itemset->push_back(maxitem);
+	node->itemsum = get_itemsum(node->itemset);
+
 	if (_identify) {
 		identify(node);
 	}
@@ -244,13 +249,31 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	return node;
 }
 
-#ifdef USE_MAP_FOR_GEN
-bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
-	for (const CETNode* node : GENERATORS[itemset->size() - 1]) {
-		if (contains(itemset, node->itemset, true)) {
-			if (node->support == refsup)
-				return false;
+#ifndef USE_MAP_FOR_GEN
+bool node_is_a_generator(const CETNode* node) {
+	uint32_t itemsum = node->itemsum;
+
+	std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>>::iterator git = GENERATORS.find(node->itemset->size() - 1);
+	if (git == GENERATORS.end())
+		return false;
+
+	std::map<uint32_t, std::vector<CETNode*>>& generators = git->second;
+
+	for (std::vector<uint32_t>::iterator it = node->itemset->begin(); it != node->itemset->end(); it++) {
+		itemsum -= *it;
+
+		std::map<uint32_t, std::vector<CETNode*>>::const_iterator git = generators.find(itemsum);
+		if (git == generators.end())
+			return false;
+
+		for (const CETNode* gen : generators[itemsum]) {
+			if (contains(node->itemset, gen->itemset, true)) { // can this be removed ?
+				if (gen->support == node->support) {
+					return false;
+				}
+			}
 		}
+		itemsum += *it;
 	}
 	
 	return true;
@@ -289,12 +312,12 @@ bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t
 #endif
 
 
-bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference) {
+bool is_contained_strict(const std::vector<uint32_t>* contained, const std::vector<uint32_t>* container) {
 	uint32_t match = 0;
 
-	for (const uint32_t cmp : *compared) {
+	for (const uint32_t cmp : *contained) {
 		bool any = false;
-		for (const uint32_t ref : *reference) {
+		for (const uint32_t ref : *container) {
 			if (ref == cmp) {
 				match++;
 				any = true;
@@ -304,16 +327,8 @@ bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vecto
 			return false;
 	}
 
-	if (match > 0 && match < reference->size()) {
-		/*std::cout << " compared ";
-		for (const uint32_t i : *compared)
-			std::cout << i << " ";
-		std::cout << " is in reference ";
-		for (const uint32_t i : *reference)
-			std::cout << i << " ";
-		std::cout << std::endl << std::endl;*/
+	if (match > 0 && match < container->size())
 		return true;
-	}
 	
 	return false;
 }
@@ -327,158 +342,18 @@ std::string itemset_to_string(const std::vector<uint32_t>* itemset) {
 }
 
 void add_generator(CETNode* node) {
-	GENERATORS[node->itemset->size()].push_back(node);
+	GENERATORS[node->itemset->size()][node->itemsum].push_back(node);
 }
 
 void remove_generator(CETNode* node) {
-	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()];
+	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()][node->itemsum];
 	v.erase(std::find(v.begin(), v.end(), node));
 }
 
-/*
-void add_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
-	//std::cout << "Added new CI of size " << _node->itemset->size() << " ";
-	//print_cet_node(_node);
-
-	if (NBR_CLOSED_NODES != CLOSED_ITEMSETS.size()) {
-		//System.out.println("before add erreur d'integrite " + NBR_CLOSED_NODES + " vs " + CLOSED_ITEMSETS.size());
-		exit(ERROR_NBR_CLOSED_NODES_DOES_NOT_MATCH_CI_SET_SIZE);
+uint32_t get_itemsum(const std::vector<uint32_t>* itemset) {
+	uint32_t sum = 0;
+	for (const uint32_t item : *itemset) {
+		sum += item;
 	}
-
-	if (CLOSED_ITEMSETS.end() != CLOSED_ITEMSETS.find(_node->id)) {
-		//System.out.println("on a deja cet id #" + _node.id + " " + Arrays.toString(CLOSED_ITEMSETS.get(_node.id).itemset) + " vs " + Arrays.toString(_node.itemset));
-		exit(ERROR_ID_NEW_CI_ALREADY_REGISTERED);
-	}
-
-	CLOSED_ITEMSETS.emplace(_node->id, _node);
-	NBR_CLOSED_NODES += 1;
-
-	if (NBR_CLOSED_NODES != CLOSED_ITEMSETS.size()) {
-		//System.out.println("after add erreur d'integrite " + NBR_CLOSED_NODES + " vs " + CLOSED_ITEMSETS.size());
-		exit(ERROR_NBR_CLOSED_NODES_DOES_NOT_MATCH_CI_SET_SIZE);
-	}
-
-};
-
-void delete_ci(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
-	//System.out.println("deleting "+Arrays.toString(_node.itemset)+" w/ "+_node.support);
-	if (NBR_CLOSED_NODES != CLOSED_ITEMSETS.size()) {
-		//System.out.println("before erreur d'integrite " + NBR_CLOSED_NODES + " vs " + CLOSED_ITEMSETS.size());
-		exit(ERROR_NBR_CLOSED_NODES_DOES_NOT_MATCH_CI_SET_SIZE);
-	}
-
-	NBR_CLOSED_NODES -= 1;
-	if (CLOSED_ITEMSETS.find(_node->id) == CLOSED_ITEMSETS.end()) {
-		//System.out.println("(delete) oh shit, " + _node.id + " should " + Arrays.toString(_node.itemset) + " be here..." + _node.support);
-		//new Throwable().printStackTrace(System.out);
-		exit(ERROR_CANNOT_DELETE_UNREGISTRED_CI);
-	}
-
-	CLOSED_ITEMSETS.erase(_node->id);
-	//_node.oldHash = _node.hash;
-	remove_from_class(_node, _EQ_TABLE);
-
-	//_node.parent.children.remove(_node.item);
-
-	if (NBR_CLOSED_NODES != CLOSED_ITEMSETS.size()) {
-		//System.out.println("erreur d'integrite " + NBR_CLOSED_NODES + " vs " + CLOSED_ITEMSETS.size());
-		exit(ERROR_NBR_CLOSED_NODES_DOES_NOT_MATCH_CI_SET_SIZE);
-	}
-};
-
-void prune_children(CETNode* const _node, const uint32_t _tid, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
-	if (_node->children) {
-		//pour chaque fils call prune_children 
-		//check les fils, si closed remove dans la table
-		//aussi remvove de CLOSED_ITEMSETS
-		std::map<uint32_t, CETNode*>::iterator it = _node->children->begin();
-		for (; it != _node->children->end(); ++it) {
-			CETNode* const node = it->second;
-			if (node->type == CLOSED_NODE) {
-				delete_ci(node, _EQ_TABLE);
-			}
-			prune_children(node, _tid, _EQ_TABLE);
-			NBR_NODES -= 1;
-			delete node->tidlist;
-			delete node->itemset;
-			delete node->children;
-			delete node;
-		}
-		_node->children->clear();
-	}
-};
-
-void remove_from_class(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
-	{
-		if (_EQ_TABLE->find(_node->oldHash) == _EQ_TABLE->end() || !_EQ_TABLE->find(_node->oldHash)->second) {
-			_node->oldHash = _node->hash;
-		}
-		std::vector<CETNode*>* const ancienneClasse = _EQ_TABLE->find(_node->oldHash)->second->at(_node->itemset->size());
-		uint32_t positionMatch = ancienneClasse->size();
-		uint32_t cursor = 0;
-
-		std::vector<CETNode*>::iterator it = ancienneClasse->begin();
-		for (; it != ancienneClasse->end(); ++it) {
-			CETNode* const n = *it;
-			if (exactMatch(n->itemset, _node->itemset)) {
-				positionMatch = cursor;//ok trouve, on doit le supprimer
-				break;
-			}
-			cursor += 1;
-		}
-
-		if (positionMatch != ancienneClasse->size()) {
-			ancienneClasse->erase(ancienneClasse->begin() + positionMatch);
-		}
-		else {
-			//erreur
-			std::vector<CETNode*>* const ancienneClasse2 = _EQ_TABLE->find(_node->hash)->second->at(_node->itemset->size());
-			uint32_t positionMatch2 = ancienneClasse2->size();
-			uint32_t cursor2 = 0;
-			std::vector<CETNode*>::iterator it2 = ancienneClasse2->begin();
-			for (; it2 != ancienneClasse2->end(); ++it2) {
-				CETNode* const n = *it2;
-				if (exactMatch(n->itemset, _node->itemset)) {
-					positionMatch2 = cursor2;//ok trouve, on doit le supprimer
-					break;
-				}
-				cursor2 += 1;
-			}
-			if (positionMatch2 != ancienneClasse2->size()) {
-				//System.out.println("but was found in "+_node.hash+" !!!!");
-				ancienneClasse2->erase(ancienneClasse2->begin() + positionMatch2);
-			}
-			else {
-				//System.out.println("could not be found...");
-				//System.out.println((_called_from ? "(rem)" : "(add)") + " could not find CI to transfer between classes..." + Arrays.toString(_node.itemset) + " has a support of s=" + _node.support + " hash=" + _node.hash + " oldHash=" + _node.oldHash + " tidset=" + Arrays.toString(_node.tidlist));
-				//System.exit(1);
-			}
-			//System.exit(1);
-		}
-	}
-};
-
-void update_cetnode_in_hashmap(CETNode* const _node, std::map<long, std::vector<std::vector<CETNode*>*>*>* const _EQ_TABLE) {
-	remove_from_class(_node, _EQ_TABLE);
-	//add into new class
-	//on ajoute le noeud dans la bonne classe d'equivalence (tidsum + support)
-	{
-		if (_EQ_TABLE->end() == _EQ_TABLE->find(_node->hash)) {
-			_EQ_TABLE->emplace(_node->hash, new std::vector<std::vector<CETNode*>*>());
-		}
-		if (_EQ_TABLE->find(_node->hash)->second->size() <= _node->itemset->size()) {
-			while (_EQ_TABLE->find(_node->hash)->second->size() <= _node->itemset->size()) {
-				_EQ_TABLE->find(_node->hash)->second->push_back(new std::vector<CETNode*>());
-			}
-		}
-		_EQ_TABLE->find(_node->hash)->second->at(_node->itemset->size())->push_back(_node);
-	}
-};
-
-void print_cet_node(CETNode* const _node) {
-	std::vector<uint32_t>::iterator it = _node->itemset->begin();
-	for (; it != _node->itemset->end(); ++it) {
-		std::cout << *it << ", ";
-	}
-	std::cout << std::endl;
-}*/
+	return sum;
+}
