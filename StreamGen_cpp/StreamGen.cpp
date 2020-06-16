@@ -244,6 +244,7 @@ CETNode* create_node(CETNode* parent, uint32_t maxitem, std::vector<uint32_t>* t
 	return node;
 }
 
+#ifdef USE_MAP_FOR_GEN
 bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
 	for (const CETNode* node : GENERATORS[itemset->size() - 1]) {
 		if (contains(itemset, node->itemset, true)) {
@@ -254,6 +255,39 @@ bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t
 	
 	return true;
 }
+#else
+bool itemset_is_a_generator(const std::vector<uint32_t>* itemset, const uint32_t refsup) {
+	std::queue<CETNode*> queue;
+	queue.push(&ROOT);
+
+	while (!queue.empty()) {
+		CETNode* node = queue.front();
+		queue.pop();
+
+		if (node->itemset->size() > 0) {
+			//if(!contains(itemset, node->itemset, true))
+			if (!is_contained_strict(node->itemset, itemset))
+				continue;
+		}
+
+		if (node->type != GENERATOR_NODE) {
+			return false;
+		}
+		if (node->support == refsup) {
+			return false;
+		}
+
+		if (node->children) {
+			for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
+				queue.push(child.second);
+			}
+		}
+	}
+	return true;
+}
+
+#endif
+
 
 bool is_contained_strict(const std::vector<uint32_t>* compared, const std::vector<uint32_t>* reference) {
 	uint32_t match = 0;

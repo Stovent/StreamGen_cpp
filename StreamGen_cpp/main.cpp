@@ -21,7 +21,7 @@
 #endif
 
 uint32_t CET_NODE_ID = 0;
-uint32_t NBR_GENERATOR_NODES = 0; // root is always generator
+uint32_t NBR_GENERATOR_NODES = 1; // root is always generator
 uint32_t minsup = 0;
 CETNode ROOT = CETNode();
 std::map<uint32_t, std::vector<CETNode*>> GENERATORS; // <itemset size, nodes>
@@ -118,7 +118,8 @@ int main(int argc, char *argv[]) {
         queue.pop();
 
         if (node->type == GENERATOR_NODE) {
-            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
+            output << std::setw(8) << node->id << " " << std::setw(4) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
+              //<< "\t|||\t" << itemset_to_string(node->tidlist) << std::endl;
         }/*
         else {
             output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
