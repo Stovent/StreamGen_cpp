@@ -22,8 +22,8 @@
 uint32_t CET_NODE_ID = 0;
 uint32_t NBR_GENERATOR_NODES = 0; // root is always generator
 uint32_t minsup = 0;
-CETNode ROOT = CETNode();
-std::map<uint32_t, std::map<uint32_t, std::vector<CETNode*>>> GENERATORS; // <itemset size, <itemsum, nodes>>
+std::shared_ptr<CETNode> ROOT = std::make_shared<CETNode>();
+std::map<uint32_t, std::map<uint32_t, std::vector<std::shared_ptr<CETNode>>>> GENERATORS; // <itemset size, <itemsum, nodes>>
 
 int main(int argc, char *argv[]) {
     if (argc != 5 && argc != 6) {
@@ -53,31 +53,27 @@ int main(int argc, char *argv[]) {
 
     std::cout << "  minsup: " << minsup << "; window_size: " << window_size << std::endl;
 
-    ROOT.id = 0;
-    ROOT.children = new std::map<uint32_t, CETNode*>();
-    ROOT.itemset = new std::vector<uint32_t>();
-    ROOT.tidlist = new std::vector<uint32_t>();
-    ROOT.tidsum = 0;
-    ROOT.maxitem = 0;
-    ROOT.itemsum = 0;
-    ROOT.type = GENERATOR_NODE;
-    GENERATORS[0][0].push_back(&ROOT);
+    ROOT->id = 0;
+    ROOT->tidsum = 0;
+    ROOT->maxitem = 0;
+    ROOT->itemsum = 0;
+    ROOT->type = GENERATOR_NODE;
+    ROOT->parent = nullptr;
+    GENERATORS[0][0].push_back(ROOT);
 
     //initialiser l'arbre (autant de noeuds que d'items)
     //ou on peut le faire a chaque trx ? si nouvel item, on rajoute l'item dans l'arbre ?
     for (int i = 0; i != MAX_ATTRIBUTES; ++i) {
-        CETNode* atom = new CETNode();
-        ROOT.children->emplace(i, atom);
-        atom->parent = &ROOT;
-        atom->maxitem = i;
-        atom->itemset = new std::vector<uint32_t>();
-        atom->itemset->push_back(i);
-        atom->type = INFREQUENT_NODE;
-        atom->tidlist = new std::vector<uint32_t>();// [0];
-        atom->tidsum = 0;
+        std::shared_ptr<CETNode> atom = std::make_shared<CETNode>();
         atom->id = ++CET_NODE_ID;
-        atom->itemsum = get_itemsum(atom->itemset);
+        atom->type = INFREQUENT_NODE;
+        atom->parent = ROOT;
+        atom->maxitem = i;
+        atom->tidsum = 0;
         atom->support = 0;
+        atom->itemset.push_back(i);
+        atom->itemsum = get_sum(atom->itemset);
+        ROOT->children.emplace(i, atom);
     }
 
     char s[10000];
@@ -115,7 +111,7 @@ int main(int argc, char *argv[]) {
     std::cout << "NBR Generators: " << NBR_GENERATOR_NODES << std::endl;
 
     // export generators for debug
-    if (output.is_open()) {
+    /*if (output.is_open()) {
         output << " node_id supp itemset" << std::endl;
         std::queue<CETNode*> queue;
         queue.push(&ROOT);
@@ -128,23 +124,23 @@ int main(int argc, char *argv[]) {
             }/*
             else {
                 output << std::setw(13) << node->support << " " << itemset_to_string(node->itemset) << std::endl;
-            }*/
-
+            }* /
+            
             if (node->children) {
                 for (const std::pair<uint32_t, CETNode*>& child : *node->children) {
                     queue.push(child.second);
                 }
             }
         }
-    }
+    }*/
 
     //nettoyage de l'arbre (TODO: put this in a function)
     //NOTA: peut etre prune_children pourrait faire l'affaire ici !!
     {
         //prune_children(&ROOT, 0, &EQ_TABLE);
-        delete ROOT.children;
-        delete ROOT.itemset;
-        delete ROOT.tidlist;
+        //delete ROOT.children;
+        //delete ROOT.itemset;
+        //delete ROOT.tidlist;
         //nettoyer, children, itemset
         //y aller directement DFS
     }
