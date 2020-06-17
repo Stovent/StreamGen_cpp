@@ -9,7 +9,11 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+<<<<<<< Updated upstream
     <LocalDebuggerCommandArguments>0 17000 1 $(SolutionDir)\datasets\retail_reduced.dat output.txt</LocalDebuggerCommandArguments>
+=======
+    <LocalDebuggerCommandArguments>2000 120 10 $(SolutionDir)\datasets\mushroom.dat</LocalDebuggerCommandArguments>
+>>>>>>> Stashed changes
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

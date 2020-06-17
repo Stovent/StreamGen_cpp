@@ -262,11 +262,11 @@ bool node_is_a_generator(const CETNode* node) {
 	for (std::vector<uint32_t>::iterator it = node->itemset->begin(); it != node->itemset->end(); it++) {
 		itemsum -= *it;
 
-		std::map<uint32_t, std::vector<CETNode*>>::const_iterator git = generators.find(itemsum);
-		if (git == generators.end())
+		std::map<uint32_t, std::vector<CETNode*>>::const_iterator ggit = generators.find(itemsum);
+		if (ggit == generators.end())
 			return false;
 
-		for (const CETNode* gen : generators[itemsum]) {
+		for (const CETNode* gen : ggit->second) {
 			if (contains(node->itemset, gen->itemset, true)) { // can this be removed ?
 				if (gen->support == node->support) {
 					return false;

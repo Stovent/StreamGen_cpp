@@ -143,9 +143,9 @@ int main(int argc, char *argv[]) {
     //NOTA: peut etre prune_children pourrait faire l'affaire ici !!
     {
         //prune_children(&ROOT, 0, &EQ_TABLE);
-        delete ROOT.children;
-        delete ROOT.itemset;
-        delete ROOT.tidlist;
+        //delete ROOT.children;
+        //delete ROOT.itemset;
+        //delete ROOT.tidlist;
         //nettoyer, children, itemset
         //y aller directement DFS
     }
