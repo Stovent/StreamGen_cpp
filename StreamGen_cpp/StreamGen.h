@@ -5,35 +5,13 @@
 #include <string>
 #include <vector>
 
-struct CETNode {
-	uint8_t type;
-	uint32_t support;
-	uint32_t maxitem; // theorically, item and maxitem should refer to the same item.
-					  // is using children[children->size() - 1] a better solution?
-	uint32_t tidsum = 0;
-	uint32_t id;
-	uint32_t itemsum;
+struct CETNode;
 
-	std::vector<uint32_t>* itemset;
-	std::map<uint32_t, CETNode*>* children;
-	CETNode* parent;
-	std::vector<uint32_t>* tidlist;
-	
-	~CETNode() {
-		delete itemset;
-		delete tidlist;
-		if (children) {
-			for (const std::pair<uint32_t, CETNode*> child : *children) {
-				delete child.second;
-			}
-		}
-		delete children;
-	}
+enum NodeType {
+	INFREQUENT_NODE = 0x01,
+	UNPROMISSING_NODE = 0x02,
+	GENERATOR_NODE = 0x03,
 };
-
-const uint8_t INFREQUENT_NODE   = 0x01;
-const uint8_t UNPROMISSING_NODE = 0x02;
-const uint8_t GENERATOR_NODE     = 0x03;
 
 // given complexity is worst case
 void Explore(CETNode* const node); // O(n * (O(has_child) + O(new_child))), n = node->parent->children->size()
@@ -56,5 +34,35 @@ std::string itemset_to_string(const std::vector<uint32_t>* itemset); // O(n), n 
 void add_generator(CETNode* node); // O(n), n = complexity to add an item to a map (usually logarithmic)
 void remove_generator(CETNode* node); // O(n), n = number of nodes in GENERATORS[node->itemset->size()][node->itemsum]
 uint32_t get_itemsum(const std::vector<uint32_t>* itemset); // O(n), n = itemset->size()
+
+
+struct CETNode {
+	uint8_t type;
+	uint32_t support;
+	uint32_t maxitem; // theorically, item and maxitem should refer to the same item.
+					  // is using children[children->size() - 1] a better solution?
+	uint32_t tidsum = 0;
+	uint32_t id;
+	uint32_t itemsum;
+
+	std::vector<uint32_t>* itemset;
+	std::map<uint32_t, CETNode*>* children;
+	CETNode* parent;
+	std::vector<uint32_t>* tidlist;
+
+	~CETNode() {
+		if (type == GENERATOR_NODE) {
+			remove_generator(this);
+		}
+		delete itemset;
+		delete tidlist;
+		if (children) {
+			for (const std::pair<uint32_t, CETNode*> child : *children) {
+				delete child.second;
+			}
+		}
+		delete children;
+	}
+};
 
 #endif // STREAMGEN_H

@@ -200,7 +200,6 @@ void remove_child(CETNode* node, uint32_t item) {
 }
 
 void clean(CETNode* node) {
-	NBR_GENERATOR_NODES--;
 	remove_generator(node);
 
 	clean_children(node);
@@ -347,7 +346,11 @@ void add_generator(CETNode* node) {
 
 void remove_generator(CETNode* node) {
 	std::vector<CETNode*>& v = GENERATORS[node->itemset->size()][node->itemsum];
-	v.erase(std::find(v.begin(), v.end(), node));
+	std::vector<CETNode*>::const_iterator it = std::find(v.begin(), v.end(), node);
+	if (it != v.end()) {
+		v.erase(it);
+		NBR_GENERATOR_NODES--;
+	}
 }
 
 uint32_t get_itemsum(const std::vector<uint32_t>* itemset) {
